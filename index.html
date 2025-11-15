@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Journal</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and scrollbar styling for aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        textarea {
+            transition: all 0.2s ease-in-out;
+        }
+        /* Custom scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-8">
+
+    <!-- Main Container -->
+    <div id="app-container" class="w-full max-w-3xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100">
+        
+        <!-- Header and User Info -->
+        <header class="mb-8 pb-4 border-b border-gray-200">
+            <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 mr-3 text-blue-500"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
+                Personal Journal
+            </h1>
+            <p class="text-gray-600 text-lg">Capture your thoughts and moments in real-time.</p>
+            <div id="user-info" class="mt-4 text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center break-words">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span class="font-semibold text-blue-700 mr-2">User ID:</span> 
+                <span id="user-id-display">Loading...</span>
+            </div>
+        </header>
+
+        <!-- Error Message -->
+        <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Error: </strong>
+            <span id="error-text" class="block sm:inline"></span>
+        </div>
+
+        <!-- New Entry Form -->
+        <form id="new-entry-form" class="mb-10 p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
+            <label for="new-entry-text" class="block text-xl font-semibold text-gray-700 mb-3 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 text-yellow-600"><path d="M12 20h9"/><path d="M16.5 3.5L21 8l-6 6-4-4z"/><path d="M15 5L19 9"/></svg>
+                Write a New Entry
+            </label>
+            <textarea
+                id="new-entry-text"
+                rows="5"
+                class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 resize-none text-gray-800"
+                placeholder="What's on your mind today? This will be saved instantly."
+            ></textarea>
+            <button
+                type="submit"
+                id="save-button"
+                class="mt-4 w-full sm:w-auto px-6 py-3 text-lg font-bold text-white rounded-lg shadow-md transition duration-200 flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+            >
+                Save Entry
+            </button>
+        </form>
+
+        <!-- Entries List -->
+        <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">My Past Entries</h2>
+
+        <div id="loading-indicator" class="flex justify-center items-center h-48">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500 animate-spin mr-3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            <span class="text-xl text-gray-500">Loading diary...</span>
+        </div>
+
+        <div id="entries-list" class="space-y-6">
+            <!-- Entries will be dynamically inserted here -->
+        </div>
+        
+        <div id="empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
+            <p class="text-lg font-medium">Your diary is empty. Start writing your first entry above!</p>
+        </div>
+    </div>
+
+    <!-- Firebase and Application Logic -->
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged,
+            setPersistence,
+            inMemoryPersistence,
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            collection, 
+            query, 
+            onSnapshot, 
+            addDoc, 
+            deleteDoc, 
+            Timestamp, 
+            orderBy, 
+            setLogLevel,
+            limit
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- GLOBAL ENVIRONMENT VARS (Provided by the execution environment) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- FIREBASE INITIALIZATION ---
+        setLogLevel('debug'); // Enable Firestore logging
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        setPersistence(auth, inMemoryPersistence); // Use in-memory persistence
+
+        let currentUserId = null;
+
+        // --- UTILITY FUNCTIONS ---
+
+        function showMessage(type, message) {
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            
+            if (message) {
+                errorDiv.classList.remove('hidden');
+                errorDiv.className = `px-4 py-3 rounded relative mb-6 ${type === 'error' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-green-100 border-green-400 text-green-700'}`;
+                errorText.innerHTML = message;
+
+                // Clear temporary messages after a few seconds
+                if (type !== 'error') {
+                     setTimeout(() => {
+                        errorDiv.classList.add('hidden');
+                        errorText.innerHTML = '';
+                    }, 5000);
+                }
+            } else {
+                errorDiv.classList.add('hidden');
+                errorText.innerHTML = '';
+            }
+        }
+
+        function setSavingState(isSaving, text = 'Save Entry') {
+            const button = document.getElementById('save-button');
+            const textarea = document.getElementById('new-entry-text');
+            
+            button.disabled = isSaving;
+            textarea.disabled = isSaving;
+
+            if (isSaving) {
+                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving...';
+                button.classList.add('bg-gray-400', 'cursor-not-allowed');
+                button.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
+            } else {
+                button.innerHTML = text;
+                button.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
+            }
+        }
+
+        const formatDate = (timestamp) => {
+            if (!timestamp || !timestamp.toDate) return 'Unknown Date';
+            const date = timestamp.toDate();
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+        };
+
+        // Base64 and PCM to WAV conversion functions (for TTS)
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcm16, sampleRate = 16000) {
+            const numChannels = 1;
+            const numSamples = pcm16.length;
+            const bytesPerSample = 2; 
+
+            const wavBuffer = new ArrayBuffer(44 + numSamples * bytesPerSample);
+            const view = new DataView(wavBuffer);
+
+            let offset = 0;
+            view.setUint32(offset, 0x52494646, false); offset += 4; // "RIFF"
+            view.setUint32(offset, 36 + numSamples * bytesPerSample, true); offset += 4;
+            view.setUint32(offset, 0x57415645, false); offset += 4; // 'WAVE'
+            view.setUint32(offset, 0x666d7420, false); offset += 4; // 'fmt '
+            view.setUint32(offset, 16, true); offset += 4;
+            view.setUint16(offset, 1, true); offset += 2;
+            view.setUint16(offset, numChannels, true); offset += 2;
+            view.setUint32(offset, sampleRate, true); offset += 4;
+            view.setUint32(offset, sampleRate * bytesPerSample * numChannels, true); offset += 4;
+            view.setUint16(offset, bytesPerSample * numChannels, true); offset += 2;
+            view.setUint16(offset, 16, true); offset += 2;
+            view.setUint32(offset, 0x64617461, false); offset += 4; // 'data'
+            view.setUint32(offset, numSamples * bytesPerSample, true); offset += 4;
+
+            for (let i = 0; i < numSamples; i++) {
+                view.setInt16(offset, pcm16[i], true);
+                offset += 2;
+            }
+
+            return new Blob([wavBuffer], { type: 'audio/wav' });
+        }
+
+
+        // --- API & DATA FUNCTIONS ---
+
+        async function speakEntry(entryText) {
+            if (!entryText) return;
+            
+            showMessage('info', 'Generating speech, please wait...');
+
+            try {
+                const payload = {
+                    contents: [{
+                        parts: [{ text: `Say in a gentle, warm tone: ${entryText}` }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Vindemiatrix" } // Gentle voice
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+                
+                const apiKey = ""; // API key is handled by the canvas environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                
+                const maxRetries = 3;
+                let attempt = 0;
+                let audioData = null;
+                let mimeType = null;
+                
+                while (attempt < maxRetries) {
+                    attempt++;
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const result = await response.json();
+                        const part = result?.candidates?.[0]?.content?.parts?.[0];
+                        audioData = part?.inlineData?.data;
+                        mimeType = part?.inlineData?.mimeType;
+
+                        if (audioData && mimeType && mimeType.startsWith("audio/L16")) break;
+                        else throw new Error("Invalid audio response structure or mime type.");
+
+                    } catch (e) {
+                        console.error(`Attempt ${attempt} failed:`, e);
+                        if (attempt < maxRetries) {
+                            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+                
+                if (audioData && mimeType) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                    
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                    
+                    audio.onended = () => {
+                        URL.revokeObjectURL(audioUrl);
+                        showMessage(null, ''); // Clear message after playing
+                    };
+                } else {
+                    showMessage('error', "Failed to generate audio.");
+                }
+
+            } catch (e) {
+                console.error("TTS request error:", e);
+                showMessage('error', "TTS failed due to an API error.");
+            }
+        }
+
+        async function addEntry(event) {
+            event.preventDefault();
+            const textarea = document.getElementById('new-entry-text');
+            const text = textarea.value.trim();
+
+            if (!text || !currentUserId) {
+                showMessage('error', "Diary entry cannot be empty or user not authenticated.");
+                return;
+            }
+            
+            showMessage(null, '');
+            setSavingState(true, 'Saving...');
+
+            try {
+                const collectionPath = `artifacts/${appId}/users/${currentUserId}/diary_entries`;
+                await addDoc(collection(db, collectionPath), {
+                    text: text,
+                    timestamp: Timestamp.now(),
+                });
+                textarea.value = '';
+                showMessage('success', 'Entry saved successfully!');
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showMessage('error', "Failed to save entry. Check console.");
+            } finally {
+                setSavingState(false);
+            }
+        }
+
+        async function deleteEntry(id) {
+            if (!currentUserId) return;
+            
+            // Simple text prompt for confirmation
+            const confirmation = prompt("Type 'DELETE' to permanently remove this entry.");
+            if (confirmation !== 'DELETE') return;
+
+            try {
+                const docPath = `artifacts/${appId}/users/${currentUserId}/diary_entries/${id}`;
+                await deleteDoc(doc(db, docPath));
+            } catch (e) {
+                console.error("Error deleting document: ", e);
+                showMessage('error', "Failed to delete entry.");
+            }
+        }
+
+        function renderEntries(entries) {
+            const list = document.getElementById('entries-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            // Clear existing list
+            list.innerHTML = ''; 
+
+            if (entries.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            // Sort entries (though Firestore query should handle most of the sort)
+            // We re-sort client side based on 'seconds' just in case the query wasn't strictly followed
+            const sortedEntries = entries.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+
+
+            sortedEntries.forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = "bg-white p-5 border-l-4 border-blue-400 shadow-md rounded-lg hover:shadow-lg transition duration-150";
+                
+                // Content HTML
+                entryDiv.innerHTML = `
+                    <p class="text-sm font-medium text-gray-500 mb-2 border-b pb-2">
+                        ${formatDate(entry.timestamp)}
+                    </p>
+                    <p class="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                        ${entry.text}
+                    </p>
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button class="tts-button p-2 text-sm text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition duration-150" title="Listen to Entry (TTS)" data-text="${entry.text}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                        </button>
+                        <button class="delete-button p-2 text-sm text-red-700 bg-red-100 rounded-full hover:bg-red-200 transition duration-150" title="Delete Entry" data-id="${entry.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M15 6V4c0-1-1-2-2-2h-2c-1 0-2 1-2 2v2"/></svg>
+                        </button>
+                    </div>
+                `;
+                
+                // Add event listeners using delegation or direct attachment
+                entryDiv.querySelector('.delete-button').addEventListener('click', () => deleteEntry(entry.id));
+                entryDiv.querySelector('.tts-button').addEventListener('click', (e) => speakEntry(e.currentTarget.getAttribute('data-text')));
+                
+                list.appendChild(entryDiv);
+            });
+        }
+
+        // --- MAIN APPLICATION SETUP ---
+
+        // 1. Authentication Listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                document.getElementById('user-id-display').textContent = currentUserId;
+                startDataListener(); // Start listening for data once authenticated
+            } else {
+                // If token fails or is not present, sign in anonymously
+                try {
+                    const userCredential = await signInAnonymously(auth);
+                    currentUserId = userCredential.user.uid;
+                    document.getElementById('user-id-display').textContent = currentUserId;
+                    startDataListener();
+                } catch (e) {
+                    console.error("Authentication failed:", e);
+                    document.getElementById('loading-indicator').innerHTML = '<span class="text-xl text-red-500">Authentication Failed. See console.</span>';
+                }
+            }
+        });
+
+        // 2. Data Listener Setup
+        let unsubscribeSnapshot = null;
+        function startDataListener() {
+            if (unsubscribeSnapshot) unsubscribeSnapshot(); // Cleanup previous listener
+
+            const collectionPath = `artifacts/${appId}/users/${currentUserId}/diary_entries`;
+            const entriesCollectionRef = collection(db, collectionPath);
+            
+            // Order by timestamp descending (newest first)
+            const q = query(entriesCollectionRef, orderBy('timestamp', 'desc'));
+
+            // Real-time listener
+            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+                const entries = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Hide loading indicator
+                document.getElementById('loading-indicator').classList.add('hidden');
+                
+                renderEntries(entries);
+            }, (error) => {
+                console.error("Error fetching diary entries:", error);
+                document.getElementById('loading-indicator').innerHTML = '<span class="text-xl text-red-500">Failed to load entries. Check console.</span>';
+            });
+        }
+
+        // 3. Form Submission Handler
+        document.getElementById('new-entry-form').addEventListener('submit', addEntry);
+        
+    </script>
+</body>
+</html>
