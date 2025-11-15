@@ -71,6 +71,14 @@
                 <div id="user-list-loading" class="text-center text-gray-400">Loading users...</div>
             </div>
         </div>
+
+        <!-- Delete User Panel (Initially hidden) -->
+        <div id="delete-user-panel" class="hidden mt-6 p-4 border border-red-300 rounded-lg bg-red-50 text-center">
+            <p class="font-semibold text-red-700 mb-2">Manage User: <span id="current-user-to-delete" class="font-bold"></span></p>
+            <button id="delete-user-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition duration-150">
+                Permanently Delete This User
+            </button>
+        </div>
     </div>
 
 
@@ -221,6 +229,8 @@
             updateDoc,
             Timestamp, 
             setLogLevel,
+            writeBatch, // Import writeBatch for deleting subcollections
+            getDocs,
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- GLOBAL ENVIRONMENT VARS (Provided by the execution environment) ---
@@ -446,14 +456,16 @@
             
             showMessage(null, '');
             setSavingState(true, isDraft ? 'draft' : 'final');
+            
+            // NEW PUBLIC COLLECTION PATH
+            const collectionPath = `artifacts/${appId}/public/data/all_diary_entries`;
 
             try {
-                // FIX: Corrected path segment count (7 segments: C/D/C/D/C/D/C)
-                const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries`;
                 await addDoc(collection(db, collectionPath), {
                     text: text,
                     timestamp: Timestamp.now(),
                     isDraft: isDraft, 
+                    profileId: currentUserId, // Store the user ID for segregation
                 });
                 textarea.value = '';
                 showMessage('success', isDraft ? 'Draft saved successfully!' : 'Final entry saved successfully!');
@@ -478,9 +490,10 @@
             const confirmation = prompt("Type 'FINALIZE' to move this draft to your main entries.");
             if (confirmation !== 'FINALIZE') return;
 
+            // NEW PUBLIC DOCUMENT PATH
+            const docPath = `artifacts/${appId}/public/data/all_diary_entries/${id}`;
+
             try {
-                // FIX: Corrected path segment count
-                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries/${id}`;
                 await updateDoc(doc(db, docPath), {
                     isDraft: false,
                     timestamp: Timestamp.now()
@@ -498,9 +511,10 @@
             const confirmation = prompt("Type 'DELETE' to permanently remove this entry.");
             if (confirmation !== 'DELETE') return;
 
+            // NEW PUBLIC DOCUMENT PATH
+            const docPath = `artifacts/${appId}/public/data/all_diary_entries/${id}`;
+
             try {
-                // FIX: Corrected path segment count
-                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries/${id}`;
                 await deleteDoc(doc(db, docPath));
                 showMessage('success', 'Entry deleted successfully.');
             } catch (e) {
@@ -510,6 +524,16 @@
         }
         
         // --- USER MANAGEMENT FUNCTIONS (New logic) ---
+        
+        function updateDeletePanel(userId, username) {
+            const panel = document.getElementById('delete-user-panel');
+            if (userId) {
+                document.getElementById('current-user-to-delete').textContent = username;
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
 
         function renderUserList() {
             const list = document.getElementById('user-list');
@@ -521,11 +545,31 @@
             }
 
             allUsers.forEach(user => {
-                const button = document.createElement('button');
-                button.className = 'w-full text-left p-3 border border-blue-300 bg-blue-50 rounded-md hover:bg-blue-100 transition duration-150 text-blue-800 font-medium truncate';
-                button.textContent = user.username;
-                button.onclick = () => selectUser(user.id, user.username);
-                list.appendChild(button);
+                // Main container for the user item
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center w-full text-left p-3 border border-blue-300 bg-blue-50 rounded-md hover:bg-blue-100 transition duration-150 text-blue-800 font-medium truncate';
+                
+                // Username display (clickable to select user)
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = user.username;
+                nameSpan.className = 'cursor-pointer flex-grow hover:underline';
+                nameSpan.onclick = () => selectUser(user.id, user.username);
+
+                // Delete Icon Button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'p-1 ml-4 text-red-600 hover:text-red-800 transition duration-150 rounded-full hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500';
+                deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M15 6V4c0-1-1-2-2-2h-2c-1 0-2 1-2 2v2"/></svg>';
+                deleteBtn.title = `Delete ${user.username} Profile`;
+                
+                // Click handler for delete icon
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent selectUser from firing
+                    deleteUser(user.id, user.username);
+                };
+
+                itemDiv.appendChild(nameSpan);
+                itemDiv.appendChild(deleteBtn);
+                list.appendChild(itemDiv);
             });
         }
 
@@ -534,10 +578,13 @@
             currentUserId = userId;
             currentUsername = username;
             
-            // Update UI
+            // Update UI on main app screen
             document.getElementById('user-id-display').textContent = currentUsername;
             showMessage('success', `Signed in as ${currentUsername}!`);
             
+            // Update UI on user management screen
+            updateDeletePanel(userId, username);
+
             // Start loading their private diary entries
             startDataListeners();
             
@@ -585,6 +632,70 @@
             }
         }
         
+        async function deleteUser(idToDelete, usernameToDelete) {
+            if (!idToDelete) return;
+            
+            const confirmation = prompt(`Type "DELETE ${usernameToDelete}" to permanently remove the user and all their diary data. This cannot be undone.`);
+            if (confirmation !== `DELETE ${usernameToDelete}`) {
+                showMessage('info', 'User deletion cancelled.');
+                return;
+            }
+
+            showMessage('info', `Deleting user ${usernameToDelete} and all their data...`);
+            
+            // Use the panel button only if the user is currently signed in
+            const deleteButton = document.getElementById('delete-user-button');
+            if (currentUserId === idToDelete) {
+                deleteButton.disabled = true;
+                deleteButton.textContent = 'Deleting...';
+            }
+            
+            const originalButtonText = deleteButton.textContent;
+
+
+            try {
+                // 1. Delete all private entries associated with this profileId (from the public collection)
+                const entriesRef = collection(db, `artifacts/${appId}/public/data/all_diary_entries`);
+                
+                // Note: We cannot query by profileId AND delete via batch in this environment due to index issues.
+                // We fetch all entries and filter locally, then batch delete the matching ones.
+                const snapshot = await getDocs(query(entriesRef));
+                
+                const entriesToDelete = snapshot.docs.filter(doc => doc.data().profileId === idToDelete);
+
+                if (entriesToDelete.length > 0) {
+                    const batch = writeBatch(db);
+                    entriesToDelete.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                }
+
+                // 2. Delete the public user profile
+                const userDocRef = doc(db, `artifacts/${appId}/public/data/users/${idToDelete}`);
+                await deleteDoc(userDocRef);
+
+                showMessage('success', `User ${usernameToDelete} and all associated data have been deleted.`);
+                
+            } catch (e) {
+                console.error("Error deleting user:", e);
+                showMessage('error', `Failed to delete user ${usernameToDelete}. Check console.`);
+            } finally {
+                // Reset state and return to user selection
+                if (currentUserId === idToDelete) {
+                    deleteButton.disabled = false;
+                    deleteButton.textContent = originalButtonText;
+                    handleSwitchUser(); 
+                } else {
+                    deleteButton.disabled = false;
+                    deleteButton.textContent = originalButtonText;
+                    // Just re-render user list to reflect deletion
+                    renderUserList(); 
+                }
+            }
+        }
+
+        
         function handleSwitchUser() {
              // Clear the current user state and navigate to the user management page
             currentUserId = null;
@@ -598,6 +709,7 @@
             document.getElementById('final-entries-list').innerHTML = '';
             document.getElementById('drafts-list').innerHTML = '';
             
+            updateDeletePanel(null, null); // Hide delete panel
             window.location.hash = '#manage-users';
         }
 
@@ -648,19 +760,22 @@
         function startDataListeners() {
             if (unsubscribeAll) unsubscribeAll(); 
             
-            // FIX: Corrected path segment count (7 segments: C/D/C/D/C/D/C)
-            const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries`;
+            // NEW PUBLIC COLLECTION PATH (7 segments, public access)
+            const collectionPath = `artifacts/${appId}/public/data/all_diary_entries`;
             const entriesCollectionRef = collection(db, collectionPath);
             
-            const q = query(entriesCollectionRef); // Fetch ALL entries for the current user
+            const q = query(entriesCollectionRef); // Fetch ALL entries (then filter in JS)
 
             // Real-time listener
             unsubscribeAll = onSnapshot(q, (snapshot) => {
                 const allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
+                // FILTERING STEP: Filter entries by the currently selected user's profileId
+                const userEntries = allEntries.filter(entry => entry.profileId === currentUserId);
+
                 // Filter and sort in JavaScript
-                renderEntries(allEntries, false); // Render Final Entries (isDraft=false)
-                renderEntries(allEntries, true);  // Render Drafts (isDraft=true)
+                renderEntries(userEntries, false); // Render Final Entries (isDraft=false)
+                renderEntries(userEntries, true);  // Render Drafts (isDraft=true)
                 
                 // Hide loading indicators after data fetch is complete
                 document.getElementById('home-loading-indicator').style.display = 'none';
@@ -762,12 +877,14 @@
             if (!currentUserId) {
                 document.getElementById('user-management-page').style.display = 'block';
                 document.getElementById('main-app-content').style.display = 'none';
+                updateDeletePanel(null, null); // Hide panel if not logged in
                 return;
             }
             
             // If user is selected, show main app and route internal pages
             document.getElementById('user-management-page').style.display = 'none';
             document.getElementById('main-app-content').style.display = 'block';
+            updateDeletePanel(currentUserId, currentUsername); // Show panel if logged in
 
             let hash = window.location.hash || '#home';
             hash = hash.split('?')[0]; 
@@ -792,6 +909,7 @@
         document.addEventListener('DOMContentLoaded', initAuthAndListeners);
         document.getElementById('new-user-form').onsubmit = handleNewUser;
         document.getElementById('logout-button').addEventListener('click', handleSwitchUser);
+        document.getElementById('delete-user-button').addEventListener('click', () => deleteUser(currentUserId, currentUsername));
         document.getElementById('save-final-button').addEventListener('click', (e) => saveNewEntry(e, false));
         document.getElementById('save-draft-button').addEventListener('click', (e) => saveNewEntry(e, true));
         
