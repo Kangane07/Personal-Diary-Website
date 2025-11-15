@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Journal</title>
+    <title>Personal Journal - Multi-User Project</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -30,70 +30,171 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        /* Page simulation */
+        .page-content {
+            display: none;
+        }
+        /* User Management layout */
+        #user-management-page {
+            display: none;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4 sm:p-8">
 
-    <!-- Main Container -->
-    <div id="app-container" class="w-full max-w-3xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100">
+    <!-- USER MANAGEMENT PAGE (Replaces Login/Signup) -->
+    <div id="user-management-page" class="w-full max-w-md bg-white shadow-xl rounded-xl p-8 sm:p-10 border border-gray-100 mt-10">
+        <h2 class="text-3xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
+        <p class="text-gray-600 mb-8 text-center">Choose a user profile to access their private diary.</p>
         
-        <!-- Header and User Info -->
-        <header class="mb-8 pb-4 border-b border-gray-200">
+        <!-- Auth Status/Error Message -->
+        <div id="auth-error-message" class="hidden px-4 py-3 rounded relative mb-4 bg-red-100 border-red-400 text-red-700" role="alert">
+            <span id="auth-error-text" class="block sm:inline"></span>
+        </div>
+
+        <!-- Add New User Form -->
+        <form id="new-user-form" class="space-y-4 mb-8 p-4 border border-green-200 rounded-lg bg-green-50">
+            <h3 class="font-semibold text-lg text-green-700">Create New User</h3>
+            <input type="text" id="new-username" required placeholder="Enter Username (e.g., JohnDoe)" 
+                   class="mt-1 block w-full px-3 py-2 border border-green-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+            
+            <button type="submit" id="create-user-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition duration-150">
+                Create & Sign In
+            </button>
+        </form>
+
+        <!-- Existing Users List -->
+        <div class="space-y-3">
+            <h3 class="font-semibold text-lg text-gray-700 border-b pb-2">Existing Users</h3>
+            <div id="user-list" class="max-h-48 overflow-y-auto space-y-2">
+                <!-- User buttons dynamically inserted here -->
+                <div id="user-list-loading" class="text-center text-gray-400">Loading users...</div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MAIN APPLICATION CONTENT -->
+    <div id="main-app-content" class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100" style="display: none;">
+        
+        <!-- Header and Navigation -->
+        <header class="mb-6 pb-4 border-b border-gray-200">
             <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 mr-3 text-blue-500"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
                 Personal Journal
             </h1>
-            <p class="text-gray-600 text-lg">Capture your thoughts and moments in real-time.</p>
-            <div id="user-info" class="mt-4 text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center break-words">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span class="font-semibold text-blue-700 mr-2">User ID:</span> 
-                <span id="user-id-display">Loading...</span>
-            </div>
+            <p class="text-gray-600 text-lg">Organized access to your entries and drafts.</p>
         </header>
 
-        <!-- Error Message -->
-        <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-            <strong class="font-bold">Error: </strong>
+        <!-- Navigation Bar -->
+        <nav class="mb-8 flex space-x-2 sm:space-x-4 items-center">
+            <a href="#home" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-blue-100 text-blue-700 hover:bg-blue-200">
+                Home (Entries)
+            </a>
+            <a href="#write" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
+                Write New Entry
+            </a>
+            <a href="#drafts" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-gray-100 text-gray-700 hover:bg-gray-200">
+                Drafts (<span id="drafts-count">0</span>)
+            </a>
+            <button id="logout-button" class="ml-auto px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-red-100 text-red-700 hover:bg-red-200">
+                Switch User
+            </button>
+        </nav>
+
+        <!-- User Info and Status -->
+        <div id="user-info" class="mt-4 text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center break-words mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span class="font-semibold text-blue-700 mr-2">Signed in as:</span> 
+            <span id="user-id-display" class="font-bold">Guest</span>
+        </div>
+
+        <!-- Error/Message Display -->
+        <div id="error-message" class="hidden px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Status: </strong>
             <span id="error-text" class="block sm:inline"></span>
         </div>
 
-        <!-- New Entry Form -->
-        <form id="new-entry-form" class="mb-10 p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
-            <label for="new-entry-text" class="block text-xl font-semibold text-gray-700 mb-3 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 text-yellow-600"><path d="M12 20h9"/><path d="M16.5 3.5L21 8l-6 6-4-4z"/><path d="M15 5L19 9"/></svg>
-                Write a New Entry
-            </label>
-            <textarea
-                id="new-entry-text"
-                rows="5"
-                class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 resize-none text-gray-800"
-                placeholder="What's on your mind today? This will be saved instantly."
-            ></textarea>
-            <button
-                type="submit"
-                id="save-button"
-                class="mt-4 w-full sm:w-auto px-6 py-3 text-lg font-bold text-white rounded-lg shadow-md transition duration-200 flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
-            >
-                Save Entry
-            </button>
-        </form>
+        <!-- PAGE 1: HOME PAGE (FINAL ENTRIES LIST) -->
+        <section id="home-page" class="page-content">
+            <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Finalized Entries</h2>
+            
+            <div id="home-loading-indicator" class="flex justify-center items-center h-48">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500 animate-spin mr-3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <span class="text-xl text-gray-500">Loading finalized entries...</span>
+            </div>
 
-        <!-- Entries List -->
-        <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">My Past Entries</h2>
+            <div id="final-entries-list" class="space-y-6">
+                <!-- Final Entries will be dynamically inserted here -->
+            </div>
+            
+            <div id="home-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
+                <p class="text-lg font-medium">No final entries found. Start writing your first thought!</p>
+                <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+                    Write Now
+                </a>
+            </div>
+        </section>
 
-        <div id="loading-indicator" class="flex justify-center items-center h-48">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500 animate-spin mr-3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-            <span class="text-xl text-gray-500">Loading diary...</span>
-        </div>
-
-        <div id="entries-list" class="space-y-6">
-            <!-- Entries will be dynamically inserted here -->
-        </div>
+        <!-- PAGE 2: WRITE NEW ENTRY PAGE -->
+        <section id="write-page" class="page-content">
+            <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Write New Entry</h2>
+            
+            <form id="new-entry-form" class="p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
+                <label for="new-entry-text" class="block text-xl font-semibold text-gray-700 mb-3 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 text-yellow-600"><path d="M12 20h9"/><path d="M16.5 3.5L21 8l-6 6-4-4z"/><path d="M15 5L19 9"/></svg>
+                    Your Thoughts
+                </label>
+                <textarea
+                    id="new-entry-text"
+                    rows="8"
+                    class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 resize-none text-gray-800"
+                    placeholder="Write your diary entry here. You can choose to save it as a Draft or a Final Entry."
+                ></textarea>
+                <div class="mt-4 flex space-x-4">
+                    <button
+                        type="submit"
+                        data-action="final"
+                        id="save-final-button"
+                        class="flex-1 px-6 py-3 text-lg font-bold text-white rounded-lg shadow-md transition duration-200 flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                    >
+                        Save as Final Entry
+                    </button>
+                    <button
+                        type="submit"
+                        data-action="draft"
+                        id="save-draft-button"
+                        class="flex-1 px-6 py-3 text-lg font-bold rounded-lg shadow-md transition duration-200 flex items-center justify-center bg-gray-600 text-white hover:bg-gray-700 active:bg-gray-800"
+                    >
+                        Save as Draft
+                    </button>
+                </div>
+            </form>
+        </section>
         
-        <div id="empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
-            <p class="text-lg font-medium">Your diary is empty. Start writing your first entry above!</p>
-        </div>
+        <!-- PAGE 3: DRAFTS PAGE -->
+        <section id="drafts-page" class="page-content">
+            <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Drafts (<span id="drafts-header-count">0</span>)</h2>
+            
+            <div id="drafts-loading-indicator" class="flex justify-center items-center h-48">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500 animate-spin mr-3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <span class="text-xl text-gray-500">Loading drafts...</span>
+            </div>
+
+            <div id="drafts-list" class="space-y-6">
+                <!-- Drafts will be dynamically inserted here -->
+            </div>
+            
+            <div id="drafts-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
+                <p class="text-lg font-medium">No drafts saved. Start writing some new ideas!</p>
+                <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition">
+                    Write Draft
+                </a>
+            </div>
+        </section>
+
     </div>
 
     <!-- Firebase and Application Logic -->
@@ -107,6 +208,7 @@
             onAuthStateChanged,
             setPersistence,
             inMemoryPersistence,
+            // Removed Email/Password Auth imports
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
@@ -116,10 +218,9 @@
             onSnapshot, 
             addDoc, 
             deleteDoc, 
+            updateDoc,
             Timestamp, 
-            orderBy, 
             setLogLevel,
-            limit
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- GLOBAL ENVIRONMENT VARS (Provided by the execution environment) ---
@@ -132,49 +233,75 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        setPersistence(auth, inMemoryPersistence); // Use in-memory persistence
+        setPersistence(auth, inMemoryPersistence); 
 
-        let currentUserId = null;
+        // State variables for the app's current user
+        let currentUserId = null; // The Firestore document ID of the selected user profile
+        let currentUsername = 'Guest';
+        
+        let allUsers = []; // List of public user profiles
+        let unsubscribeAll = null; // Firestore listener for entries
 
-        // --- UTILITY FUNCTIONS ---
-
+        // --- UI UTILITY FUNCTIONS ---
+        
         function showMessage(type, message) {
-            const errorDiv = document.getElementById('error-message');
-            const errorText = document.getElementById('error-text');
+            const mainDiv = document.getElementById('error-message');
+            const mainText = document.getElementById('error-text');
+            const authDiv = document.getElementById('auth-error-message');
+            const authText = document.getElementById('auth-error-text');
+
+            const targetDiv = currentUserId ? mainDiv : authDiv;
+            const targetText = currentUserId ? mainText : authText;
             
+            // Clear all messages first
+            mainDiv.classList.add('hidden');
+            authDiv.classList.add('hidden');
+
             if (message) {
-                errorDiv.classList.remove('hidden');
-                errorDiv.className = `px-4 py-3 rounded relative mb-6 ${type === 'error' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-green-100 border-green-400 text-green-700'}`;
-                errorText.innerHTML = message;
+                targetDiv.classList.remove('hidden');
+                targetDiv.className = `px-4 py-3 rounded relative mb-6 ${type === 'error' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-green-100 border-green-400 text-green-700'}`;
+                targetText.innerHTML = message;
 
                 // Clear temporary messages after a few seconds
                 if (type !== 'error') {
                      setTimeout(() => {
-                        errorDiv.classList.add('hidden');
-                        errorText.innerHTML = '';
+                        targetDiv.classList.add('hidden');
+                        targetText.innerHTML = '';
                     }, 5000);
                 }
-            } else {
-                errorDiv.classList.add('hidden');
-                errorText.innerHTML = '';
             }
         }
 
-        function setSavingState(isSaving, text = 'Save Entry') {
-            const button = document.getElementById('save-button');
+        function setSavingState(isSaving, action) {
+            const finalBtn = document.getElementById('save-final-button');
+            const draftBtn = document.getElementById('save-draft-button');
             const textarea = document.getElementById('new-entry-text');
             
-            button.disabled = isSaving;
+            finalBtn.disabled = isSaving;
+            draftBtn.disabled = isSaving;
             textarea.disabled = isSaving;
 
             if (isSaving) {
-                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving...';
-                button.classList.add('bg-gray-400', 'cursor-not-allowed');
-                button.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
+                const buttonToSpin = action === 'final' ? finalBtn : draftBtn;
+                const buttonToHide = action === 'final' ? draftBtn : finalBtn;
+                
+                buttonToSpin.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving...';
+                buttonToSpin.classList.add('bg-gray-400', 'cursor-not-allowed');
+                buttonToSpin.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800', 'bg-gray-600', 'hover:bg-gray-700', 'active:bg-gray-800');
+                
+                buttonToHide.style.display = 'none';
+
             } else {
-                button.innerHTML = text;
-                button.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                button.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
+                finalBtn.innerHTML = 'Save as Final Entry';
+                draftBtn.innerHTML = 'Save as Draft';
+                finalBtn.style.display = 'flex';
+                draftBtn.style.display = 'flex';
+
+                finalBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                finalBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
+
+                draftBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                draftBtn.classList.add('bg-gray-600', 'hover:bg-gray-700', 'active:bg-gray-800');
             }
         }
 
@@ -182,7 +309,6 @@
             if (!timestamp || !timestamp.toDate) return 'Unknown Date';
             const date = timestamp.toDate();
             return date.toLocaleDateString('en-US', {
-                weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -191,7 +317,7 @@
             });
         };
 
-        // Base64 and PCM to WAV conversion functions (for TTS)
+        // --- TTS UTILITY FUNCTIONS (Same as before) ---
         function base64ToArrayBuffer(base64) {
             const binaryString = window.atob(base64);
             const len = binaryString.length;
@@ -233,7 +359,6 @@
             return new Blob([wavBuffer], { type: 'audio/wav' });
         }
 
-
         // --- API & DATA FUNCTIONS ---
 
         async function speakEntry(entryText) {
@@ -241,37 +366,27 @@
             
             showMessage('info', 'Generating speech, please wait...');
 
+            // TTS implementation remains the same
             try {
                 const payload = {
-                    contents: [{
-                        parts: [{ text: `Say in a gentle, warm tone: ${entryText}` }]
-                    }],
+                    contents: [{ parts: [{ text: `Say in a gentle, warm tone: ${entryText}` }] }],
                     generationConfig: {
                         responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: {
-                                prebuiltVoiceConfig: { voiceName: "Vindemiatrix" } // Gentle voice
-                            }
-                        }
+                        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Vindemiatrix" } } }
                     },
                     model: "gemini-2.5-flash-preview-tts"
                 };
                 
-                const apiKey = ""; // API key is handled by the canvas environment
+                const apiKey = ""; 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
                 
-                const maxRetries = 3;
-                let attempt = 0;
-                let audioData = null;
-                let mimeType = null;
+                const maxRetries = 3; let attempt = 0; let audioData = null; let mimeType = null;
                 
                 while (attempt < maxRetries) {
                     attempt++;
                     try {
                         const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                         });
 
                         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -307,7 +422,7 @@
                     
                     audio.onended = () => {
                         URL.revokeObjectURL(audioUrl);
-                        showMessage(null, ''); // Clear message after playing
+                        showMessage(null, '');
                     };
                 } else {
                     showMessage('error', "Failed to generate audio.");
@@ -319,27 +434,36 @@
             }
         }
 
-        async function addEntry(event) {
+        async function saveNewEntry(event, isDraft) {
             event.preventDefault();
             const textarea = document.getElementById('new-entry-text');
             const text = textarea.value.trim();
 
             if (!text || !currentUserId) {
-                showMessage('error', "Diary entry cannot be empty or user not authenticated.");
+                showMessage('error', "Diary entry cannot be empty or user not signed in.");
                 return;
             }
             
             showMessage(null, '');
-            setSavingState(true, 'Saving...');
+            setSavingState(true, isDraft ? 'draft' : 'final');
 
             try {
+                // Use the SELECTED user ID for private data storage
                 const collectionPath = `artifacts/${appId}/users/${currentUserId}/diary_entries`;
                 await addDoc(collection(db, collectionPath), {
                     text: text,
                     timestamp: Timestamp.now(),
+                    isDraft: isDraft, 
                 });
                 textarea.value = '';
-                showMessage('success', 'Entry saved successfully!');
+                showMessage('success', isDraft ? 'Draft saved successfully!' : 'Final entry saved successfully!');
+                
+                if (!isDraft) {
+                    window.location.hash = 'home';
+                } else {
+                    window.location.hash = 'drafts';
+                }
+
             } catch (e) {
                 console.error("Error adding document: ", e);
                 showMessage('error', "Failed to save entry. Check console.");
@@ -347,54 +471,258 @@
                 setSavingState(false);
             }
         }
+        
+        async function finalizeDraft(id) {
+            if (!currentUserId) return;
+            
+            const confirmation = prompt("Type 'FINALIZE' to move this draft to your main entries.");
+            if (confirmation !== 'FINALIZE') return;
+
+            try {
+                const docPath = `artifacts/${appId}/users/${currentUserId}/diary_entries/${id}`;
+                await updateDoc(doc(db, docPath), {
+                    isDraft: false,
+                    timestamp: Timestamp.now()
+                });
+                showMessage('success', 'Draft finalized and moved to Home Page!');
+            } catch (e) {
+                console.error("Error finalizing draft: ", e);
+                showMessage('error', "Failed to finalize draft.");
+            }
+        }
 
         async function deleteEntry(id) {
             if (!currentUserId) return;
             
-            // Simple text prompt for confirmation
             const confirmation = prompt("Type 'DELETE' to permanently remove this entry.");
             if (confirmation !== 'DELETE') return;
 
             try {
                 const docPath = `artifacts/${appId}/users/${currentUserId}/diary_entries/${id}`;
                 await deleteDoc(doc(db, docPath));
+                showMessage('success', 'Entry deleted successfully.');
             } catch (e) {
                 console.error("Error deleting document: ", e);
                 showMessage('error', "Failed to delete entry.");
             }
         }
+        
+        // --- USER MANAGEMENT FUNCTIONS (New logic) ---
 
-        function renderEntries(entries) {
-            const list = document.getElementById('entries-list');
-            const emptyState = document.getElementById('empty-state');
+        function renderUserList() {
+            const list = document.getElementById('user-list');
+            list.innerHTML = '';
             
-            // Clear existing list
+            if (allUsers.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-500 p-2">No users found. Create one above!</div>';
+                return;
+            }
+
+            allUsers.forEach(user => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-3 border border-blue-300 bg-blue-50 rounded-md hover:bg-blue-100 transition duration-150 text-blue-800 font-medium truncate';
+                button.textContent = user.username;
+                button.onclick = () => selectUser(user.id, user.username);
+                list.appendChild(button);
+            });
+        }
+
+        function selectUser(userId, username) {
+            // Set the app's internal user state
+            currentUserId = userId;
+            currentUsername = username;
+            
+            // Update UI
+            document.getElementById('user-id-display').textContent = currentUsername;
+            showMessage('success', `Signed in as ${currentUsername}!`);
+            
+            // Start loading their private diary entries
+            startDataListeners();
+            
+            // Navigate to home page
+            window.location.hash = '#home';
+        }
+
+        async function handleNewUser(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('new-username');
+            const username = usernameInput.value.trim();
+
+            if (!username) {
+                showMessage('error', "Username cannot be empty.");
+                return;
+            }
+            
+            if (allUsers.some(user => user.username === username)) {
+                showMessage('error', "This username already exists.");
+                return;
+            }
+
+            const button = document.getElementById('create-user-button');
+            button.disabled = true;
+            button.innerHTML = 'Creating...';
+
+            try {
+                // Public data path: artifacts/{appId}/public/data/users
+                const publicUsersCollection = collection(db, `artifacts/${appId}/public/data/users`);
+                const docRef = await addDoc(publicUsersCollection, {
+                    username: username,
+                    createdAt: Timestamp.now()
+                });
+
+                // Immediately sign in as the newly created user
+                selectUser(docRef.id, username);
+                usernameInput.value = '';
+
+            } catch (e) {
+                console.error("Error creating new user:", e);
+                showMessage('error', "Failed to create new user profile.");
+            } finally {
+                button.disabled = false;
+                button.innerHTML = 'Create & Sign In';
+            }
+        }
+        
+        function handleSwitchUser() {
+             // Clear the current user state and navigate to the user management page
+            currentUserId = null;
+            currentUsername = 'Guest';
+            document.getElementById('user-id-display').textContent = 'Not Signed In';
+            
+            // Stop listening to the previous user's data
+            if (unsubscribeAll) unsubscribeAll();
+
+            // Clear the data lists
+            document.getElementById('final-entries-list').innerHTML = '';
+            document.getElementById('drafts-list').innerHTML = '';
+            
+            window.location.hash = '#manage-users';
+        }
+
+        // --- AUTH AND INITIALIZATION FUNCTION (REPLACING onAuthStateChanged) ---
+        async function initAuthAndListeners() {
+            
+            // 1. Attempt to sign in (using token or anonymously)
+            try {
+                if (initialAuthToken) {
+                    // Try custom token sign-in first
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    // Guarantee anonymous sign-in to satisfy request.auth != null rule
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Initial sign-in failed:", e);
+                showMessage('error', "Initialization failed. Cannot access data due to authentication error.");
+            }
+
+            // 2. Auth is confirmed (or failed, but we still proceed). Start public listener and routing.
+            // The router will show the user management page if currentUserId is null.
+            startUserListener();
+            router();
+        }
+
+        // 2. Public User List Listener
+        function startUserListener() {
+            // Path: artifacts/{appId}/public/data/users
+            const publicUsersCollection = collection(db, `artifacts/${appId}/public/data/users`);
+            const q = query(publicUsersCollection);
+
+            onSnapshot(q, (snapshot) => {
+                allUsers = snapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    ...doc.data() 
+                }));
+                renderUserList();
+            }, (error) => {
+                console.error("Error fetching public user list:", error);
+                document.getElementById('user-list-loading').textContent = 'Failed to load users. (Permission check failure)';
+                showMessage('error', "Authentication failure: Cannot access user list. Please ensure Firebase Auth is initialized.");
+            });
+        }
+
+
+        // 3. Private Diary Data Listener (Starts ONLY after a user is selected)
+        function startDataListeners() {
+            if (unsubscribeAll) unsubscribeAll(); 
+            
+            // Data path is private to the selected user's Firestore ID
+            const collectionPath = `artifacts/${appId}/users/${currentUserId}/diary_entries`;
+            const entriesCollectionRef = collection(db, collectionPath);
+            
+            const q = query(entriesCollectionRef); // Fetch ALL entries for the current user
+
+            // Real-time listener
+            unsubscribeAll = onSnapshot(q, (snapshot) => {
+                const allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Filter and sort in JavaScript
+                renderEntries(allEntries, false); // Render Final Entries (isDraft=false)
+                renderEntries(allEntries, true);  // Render Drafts (isDraft=true)
+                
+                // Hide loading indicators after data fetch is complete
+                document.getElementById('home-loading-indicator').style.display = 'none';
+                document.getElementById('drafts-loading-indicator').style.display = 'none';
+
+            }, (error) => {
+                console.error("Error fetching all entries:", error);
+                document.getElementById('home-loading-indicator').innerHTML = '<span class="text-xl text-red-500">Failed to load entries. Check console.</span>';
+                document.getElementById('drafts-loading-indicator').innerHTML = '<span class="text-xl text-red-500">Failed to load drafts. Check console.</span>';
+            });
+        }
+
+
+        // --- RENDERING FUNCTIONS (Unchanged logic) ---
+        
+        function renderEntries(entries, isDraft) {
+            const listId = isDraft ? 'drafts-list' : 'final-entries-list';
+            const emptyStateId = isDraft ? 'drafts-empty-state' : 'home-empty-state';
+            const loadingId = isDraft ? 'drafts-loading-indicator' : 'home-loading-indicator';
+            
+            const list = document.getElementById(listId);
+            const emptyState = document.getElementById(emptyStateId);
+            // loading indicator is hidden globally in startDataListeners
+            
+            const filteredEntries = entries.filter(entry => entry.isDraft === isDraft);
+            const sortedEntries = filteredEntries.sort((a, b) => {
+                const timeA = a.timestamp.toDate ? a.timestamp.toDate().getTime() : 0;
+                const timeB = b.timestamp.toDate ? b.timestamp.toDate().getTime() : 0;
+                return timeB - timeA;
+            });
+            
+            if (isDraft) {
+                document.getElementById('drafts-count').textContent = sortedEntries.length;
+                document.getElementById('drafts-header-count').textContent = sortedEntries.length;
+            } 
+
             list.innerHTML = ''; 
 
-            if (entries.length === 0) {
+            if (sortedEntries.length === 0) {
                 emptyState.classList.remove('hidden');
                 return;
             }
             emptyState.classList.add('hidden');
 
-            // Sort entries (though Firestore query should handle most of the sort)
-            // We re-sort client side based on 'seconds' just in case the query wasn't strictly followed
-            const sortedEntries = entries.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
-
-
             sortedEntries.forEach(entry => {
                 const entryDiv = document.createElement('div');
-                entryDiv.className = "bg-white p-5 border-l-4 border-blue-400 shadow-md rounded-lg hover:shadow-lg transition duration-150";
+                entryDiv.className = `bg-white p-5 border-l-4 ${isDraft ? 'border-gray-400' : 'border-blue-400'} shadow-md rounded-lg hover:shadow-lg transition duration-150`;
                 
-                // Content HTML
+                const buttonHTML = isDraft ? `
+                    <button class="finalize-button p-2 text-sm text-blue-700 bg-blue-100 rounded-full hover:bg-blue-200 transition duration-150" title="Finalize Draft" data-id="${entry.id}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                    </button>
+                ` : '';
+
                 entryDiv.innerHTML = `
                     <p class="text-sm font-medium text-gray-500 mb-2 border-b pb-2">
                         ${formatDate(entry.timestamp)}
+                        <span class="ml-2 font-bold ${isDraft ? 'text-gray-600' : 'text-blue-600'}">(${isDraft ? 'Draft' : 'Final'})</span>
                     </p>
                     <p class="text-gray-800 whitespace-pre-wrap leading-relaxed">
                         ${entry.text}
                     </p>
                     <div class="mt-4 flex justify-end space-x-2">
+                        ${buttonHTML}
                         <button class="tts-button p-2 text-sm text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition duration-150" title="Listen to Entry (TTS)" data-text="${entry.text}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
                         </button>
@@ -404,66 +732,66 @@
                     </div>
                 `;
                 
-                // Add event listeners using delegation or direct attachment
                 entryDiv.querySelector('.delete-button').addEventListener('click', () => deleteEntry(entry.id));
                 entryDiv.querySelector('.tts-button').addEventListener('click', (e) => speakEntry(e.currentTarget.getAttribute('data-text')));
                 
+                if (isDraft) {
+                    entryDiv.querySelector('.finalize-button').addEventListener('click', () => finalizeDraft(entry.id));
+                }
+
                 list.appendChild(entryDiv);
             });
         }
+        
+        // --- ROUTING LOGIC ---
 
-        // --- MAIN APPLICATION SETUP ---
-
-        // 1. Authentication Listener
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                document.getElementById('user-id-display').textContent = currentUserId;
-                startDataListener(); // Start listening for data once authenticated
-            } else {
-                // If token fails or is not present, sign in anonymously
-                try {
-                    const userCredential = await signInAnonymously(auth);
-                    currentUserId = userCredential.user.uid;
-                    document.getElementById('user-id-display').textContent = currentUserId;
-                    startDataListener();
-                } catch (e) {
-                    console.error("Authentication failed:", e);
-                    document.getElementById('loading-indicator').innerHTML = '<span class="text-xl text-red-500">Authentication Failed. See console.</span>';
+        function updateNavigation(hash) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href') === hash) {
+                    link.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
+                } else {
+                    link.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
                 }
-            }
-        });
-
-        // 2. Data Listener Setup
-        let unsubscribeSnapshot = null;
-        function startDataListener() {
-            if (unsubscribeSnapshot) unsubscribeSnapshot(); // Cleanup previous listener
-
-            const collectionPath = `artifacts/${appId}/users/${currentUserId}/diary_entries`;
-            const entriesCollectionRef = collection(db, collectionPath);
-            
-            // Order by timestamp descending (newest first)
-            const q = query(entriesCollectionRef, orderBy('timestamp', 'desc'));
-
-            // Real-time listener
-            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
-                const entries = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                
-                // Hide loading indicator
-                document.getElementById('loading-indicator').classList.add('hidden');
-                
-                renderEntries(entries);
-            }, (error) => {
-                console.error("Error fetching diary entries:", error);
-                document.getElementById('loading-indicator').innerHTML = '<span class="text-xl text-red-500">Failed to load entries. Check console.</span>';
             });
         }
 
-        // 3. Form Submission Handler
-        document.getElementById('new-entry-form').addEventListener('submit', addEntry);
+        function router() {
+            // Check if a user profile is selected (simulated login)
+            if (!currentUserId) {
+                document.getElementById('user-management-page').style.display = 'block';
+                document.getElementById('main-app-content').style.display = 'none';
+                return;
+            }
+            
+            // If user is selected, show main app and route internal pages
+            document.getElementById('user-management-page').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+
+            let hash = window.location.hash || '#home';
+            hash = hash.split('?')[0]; 
+            
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.style.display = 'none';
+            });
+
+            const currentPage = document.querySelector(hash + '-page');
+            if (currentPage) {
+                currentPage.style.display = 'block';
+            } else {
+                document.getElementById('home-page').style.display = 'block';
+                hash = '#home';
+            }
+            
+            updateNavigation(hash);
+        }
+
+        // --- EVENT LISTENERS ---
+        window.addEventListener('hashchange', router);
+        document.addEventListener('DOMContentLoaded', initAuthAndListeners);
+        document.getElementById('new-user-form').onsubmit = handleNewUser;
+        document.getElementById('logout-button').addEventListener('click', handleSwitchUser);
+        document.getElementById('save-final-button').addEventListener('click', (e) => saveNewEntry(e, false));
+        document.getElementById('save-draft-button').addEventListener('click', (e) => saveNewEntry(e, true));
         
     </script>
 </body>
