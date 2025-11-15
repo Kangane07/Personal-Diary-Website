@@ -44,7 +44,7 @@
 
     <!-- USER MANAGEMENT PAGE (Replaces Login/Signup) -->
     <div id="user-management-page" class="w-full max-w-md bg-white shadow-xl rounded-xl p-8 sm:p-10 border border-gray-100 mt-10">
-        <h2 class="text-3xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
+        <h2 class="3xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
         <p class="text-gray-600 mb-8 text-center">Choose a user profile to access their private diary.</p>
         
         <!-- Auth Status/Error Message -->
@@ -448,8 +448,8 @@
             setSavingState(true, isDraft ? 'draft' : 'final');
 
             try {
-                // Use the SELECTED user ID for private data storage
-                const collectionPath = `artifacts/${appId}/users/${currentUserId}/diary_entries`;
+                // FIX: Updated to custom project path to avoid Auth UID mismatch error
+                const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries`;
                 await addDoc(collection(db, collectionPath), {
                     text: text,
                     timestamp: Timestamp.now(),
@@ -479,7 +479,8 @@
             if (confirmation !== 'FINALIZE') return;
 
             try {
-                const docPath = `artifacts/${appId}/users/${currentUserId}/diary_entries/${id}`;
+                // FIX: Updated to custom project path to avoid Auth UID mismatch error
+                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries/${id}`;
                 await updateDoc(doc(db, docPath), {
                     isDraft: false,
                     timestamp: Timestamp.now()
@@ -498,7 +499,8 @@
             if (confirmation !== 'DELETE') return;
 
             try {
-                const docPath = `artifacts/${appId}/users/${currentUserId}/diary_entries/${id}`;
+                // FIX: Updated to custom project path to avoid Auth UID mismatch error
+                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries/${id}`;
                 await deleteDoc(doc(db, docPath));
                 showMessage('success', 'Entry deleted successfully.');
             } catch (e) {
@@ -646,8 +648,8 @@
         function startDataListeners() {
             if (unsubscribeAll) unsubscribeAll(); 
             
-            // Data path is private to the selected user's Firestore ID
-            const collectionPath = `artifacts/${appId}/users/${currentUserId}/diary_entries`;
+            // FIX: Updated to custom project path to avoid Auth UID mismatch error
+            const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries`;
             const entriesCollectionRef = collection(db, collectionPath);
             
             const q = query(entriesCollectionRef); // Fetch ALL entries for the current user
