@@ -448,8 +448,8 @@
             setSavingState(true, isDraft ? 'draft' : 'final');
 
             try {
-                // FIX: Updated to custom project path to avoid Auth UID mismatch error
-                const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries`;
+                // FIX: Corrected path segment count (7 segments: C/D/C/D/C/D/C)
+                const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries`;
                 await addDoc(collection(db, collectionPath), {
                     text: text,
                     timestamp: Timestamp.now(),
@@ -479,8 +479,8 @@
             if (confirmation !== 'FINALIZE') return;
 
             try {
-                // FIX: Updated to custom project path to avoid Auth UID mismatch error
-                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries/${id}`;
+                // FIX: Corrected path segment count
+                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries/${id}`;
                 await updateDoc(doc(db, docPath), {
                     isDraft: false,
                     timestamp: Timestamp.now()
@@ -499,8 +499,8 @@
             if (confirmation !== 'DELETE') return;
 
             try {
-                // FIX: Updated to custom project path to avoid Auth UID mismatch error
-                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries/${id}`;
+                // FIX: Corrected path segment count
+                const docPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries/${id}`;
                 await deleteDoc(doc(db, docPath));
                 showMessage('success', 'Entry deleted successfully.');
             } catch (e) {
@@ -648,8 +648,8 @@
         function startDataListeners() {
             if (unsubscribeAll) unsubscribeAll(); 
             
-            // FIX: Updated to custom project path to avoid Auth UID mismatch error
-            const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/entries`;
+            // FIX: Corrected path segment count (7 segments: C/D/C/D/C/D/C)
+            const collectionPath = `artifacts/${appId}/project_data/diary_entries_by_user/${currentUserId}/private_entries_store/entries`;
             const entriesCollectionRef = collection(db, collectionPath);
             
             const q = query(entriesCollectionRef); // Fetch ALL entries for the current user
