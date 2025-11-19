@@ -1,918 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Journal - Multi-User Project</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom font and scrollbar styling for aesthetics */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
-        textarea {
-            transition: all 0.2s ease-in-out;
-        }
-        /* Custom scrollbar styles */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        /* Page simulation */
-        .page-content {
-            display: none;
-        }
-        /* User Management layout */
-        #user-management-page {
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Journal - Multi-User</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+    textarea { transition: all .15s ease-in-out; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .page-content { display: none; }
+    #user-management-page { display: none; }
+  </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4 sm:p-8">
 
-    <!-- USER MANAGEMENT PAGE (Replaces Login/Signup) -->
-    <div id="user-management-page" class="w-full max-w-md bg-white shadow-xl rounded-xl p-8 sm:p-10 border border-gray-100 mt-10">
-        <h2 class="3xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
-        <p class="text-gray-600 mb-8 text-center">Choose a user profile to access their private diary.</p>
-        
-        <!-- Auth Status/Error Message -->
-        <div id="auth-error-message" class="hidden px-4 py-3 rounded relative mb-4 bg-red-100 border-red-400 text-red-700" role="alert">
-            <span id="auth-error-text" class="block sm:inline"></span>
-        </div>
+  <!-- USER MANAGEMENT PAGE -->
+  <div id="user-management-page" class="w-full max-w-md bg-white shadow-xl rounded-xl p-8 sm:p-10 border border-gray-100 mt-10">
+    <h2 class="text-2xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
+    <p class="text-gray-600 mb-8 text-center">Choose a user profile to access your private diary.</p>
 
-        <!-- Add New User Form -->
-        <form id="new-user-form" class="space-y-4 mb-8 p-4 border border-green-200 rounded-lg bg-green-50">
-            <h3 class="font-semibold text-lg text-green-700">Create New User</h3>
-            <input type="text" id="new-username" required placeholder="Enter Username (e.g., JohnDoe)" 
-                   class="mt-1 block w-full px-3 py-2 border border-green-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-            
-            <button type="submit" id="create-user-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition duration-150">
-                Create & Sign In
-            </button>
-        </form>
-
-        <!-- Existing Users List -->
-        <div class="space-y-3">
-            <h3 class="font-semibold text-lg text-gray-700 border-b pb-2">Existing Users</h3>
-            <div id="user-list" class="max-h-48 overflow-y-auto space-y-2">
-                <!-- User buttons dynamically inserted here -->
-                <div id="user-list-loading" class="text-center text-gray-400">Loading users...</div>
-            </div>
-        </div>
-
-        <!-- Delete User Panel (Initially hidden) -->
-        <div id="delete-user-panel" class="hidden mt-6 p-4 border border-red-300 rounded-lg bg-red-50 text-center">
-            <p class="font-semibold text-red-700 mb-2">Manage User: <span id="current-user-to-delete" class="font-bold"></span></p>
-            <button id="delete-user-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition duration-150">
-                Permanently Delete This User
-            </button>
-        </div>
+    <div id="auth-error-message" class="hidden px-4 py-3 rounded relative mb-4 bg-red-100 border-red-400 text-red-700" role="alert">
+      <span id="auth-error-text" class="block sm:inline"></span>
     </div>
 
+    <form id="new-user-form" class="space-y-4 mb-8 p-4 border border-green-200 rounded-lg bg-green-50">
+      <h3 class="font-semibold text-lg text-green-700">Create New User</h3>
+      <input type="text" id="new-username" required placeholder="Enter Username (e.g., JohnDoe)"
+             class="mt-1 block w-full px-3 py-2 border border-green-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+      <button type="submit" id="create-user-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition duration-150">
+        Create & Sign In
+      </button>
+    </form>
 
-    <!-- MAIN APPLICATION CONTENT -->
-    <div id="main-app-content" class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100" style="display: none;">
-        
-        <!-- Header and Navigation -->
-        <header class="mb-6 pb-4 border-b border-gray-200">
-            <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 mr-3 text-blue-500"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
-                Personal Journal
-            </h1>
-            <p class="text-gray-600 text-lg">Organized access to your entries and drafts.</p>
-        </header>
+    <div class="space-y-3">
+      <h3 class="font-semibold text-lg text-gray-700 border-b pb-2">Existing Users</h3>
+      <div id="user-list" class="max-h-48 overflow-y-auto space-y-2">
+        <div id="user-list-loading" class="text-center text-gray-400">Loading users...</div>
+      </div>
+    </div>
+  </div>
 
-        <!-- Navigation Bar -->
-        <nav class="mb-8 flex space-x-2 sm:space-x-4 items-center">
-            <a href="#home" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-blue-100 text-blue-700 hover:bg-blue-200">
-                Home (Entries)
-            </a>
-            <a href="#write" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
-                Write New Entry
-            </a>
-            <a href="#drafts" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-gray-100 text-gray-700 hover:bg-gray-200">
-                Drafts (<span id="drafts-count">0</span>)
-            </a>
-            <button id="logout-button" class="ml-auto px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-red-100 text-red-700 hover:bg-red-200">
-                Switch User
-            </button>
-        </nav>
+  <!-- MAIN APP -->
+  <div id="main-app-content" class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100" style="display:none;">
+    <header class="mb-6 pb-4 border-b border-gray-200">
+      <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" class="w-8 h-8 mr-3 text-blue-500"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
+        Personal Journal
+      </h1>
+      <p class="text-gray-600 text-lg">Organized access to your entries and drafts.</p>
+    </header>
 
-        <!-- User Info and Status -->
-        <div id="user-info" class="mt-4 text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center break-words mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span class="font-semibold text-blue-700 mr-2">Signed in as:</span> 
-            <span id="user-id-display" class="font-bold">Guest</span>
-        </div>
+    <nav class="mb-8 flex space-x-2 sm:space-x-4 items-center">
+      <a href="#home" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-blue-100 text-blue-700 hover:bg-blue-200">Home (Entries)</a>
+      <a href="#write" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-yellow-100 text-yellow-700 hover:bg-yellow-200">Write New Entry</a>
+      <a href="#drafts" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-gray-100 text-gray-700 hover:bg-gray-200">Drafts (<span id="drafts-count">0</span>)</a>
+      <button id="logout-button" class="ml-auto px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-red-100 text-red-700 hover:bg-red-200">Switch User</button>
+    </nav>
 
-        <!-- Error/Message Display -->
-        <div id="error-message" class="hidden px-4 py-3 rounded relative mb-6" role="alert">
-            <strong class="font-bold">Status: </strong>
-            <span id="error-text" class="block sm:inline"></span>
-        </div>
-
-        <!-- PAGE 1: HOME PAGE (FINAL ENTRIES LIST) -->
-        <section id="home-page" class="page-content">
-            <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Finalized Entries</h2>
-            
-            <div id="home-loading-indicator" class="flex justify-center items-center h-48">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500 animate-spin mr-3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                <span class="text-xl text-gray-500">Loading finalized entries...</span>
-            </div>
-
-            <div id="final-entries-list" class="space-y-6">
-                <!-- Final Entries will be dynamically inserted here -->
-            </div>
-            
-            <div id="home-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
-                <p class="text-lg font-medium">No final entries found. Start writing your first thought!</p>
-                <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-                    Write Now
-                </a>
-            </div>
-        </section>
-
-        <!-- PAGE 2: WRITE NEW ENTRY PAGE -->
-        <section id="write-page" class="page-content">
-            <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Write New Entry</h2>
-            
-            <form id="new-entry-form" class="p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
-                <label for="new-entry-text" class="block text-xl font-semibold text-gray-700 mb-3 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 text-yellow-600"><path d="M12 20h9"/><path d="M16.5 3.5L21 8l-6 6-4-4z"/><path d="M15 5L19 9"/></svg>
-                    Your Thoughts
-                </label>
-                <textarea
-                    id="new-entry-text"
-                    rows="8"
-                    class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 resize-none text-gray-800"
-                    placeholder="Write your diary entry here. You can choose to save it as a Draft or a Final Entry."
-                ></textarea>
-                <div class="mt-4 flex space-x-4">
-                    <button
-                        type="submit"
-                        data-action="final"
-                        id="save-final-button"
-                        class="flex-1 px-6 py-3 text-lg font-bold text-white rounded-lg shadow-md transition duration-200 flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
-                    >
-                        Save as Final Entry
-                    </button>
-                    <button
-                        type="submit"
-                        data-action="draft"
-                        id="save-draft-button"
-                        class="flex-1 px-6 py-3 text-lg font-bold rounded-lg shadow-md transition duration-200 flex items-center justify-center bg-gray-600 text-white hover:bg-gray-700 active:bg-gray-800"
-                    >
-                        Save as Draft
-                    </button>
-                </div>
-            </form>
-        </section>
-        
-        <!-- PAGE 3: DRAFTS PAGE -->
-        <section id="drafts-page" class="page-content">
-            <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Drafts (<span id="drafts-header-count">0</span>)</h2>
-            
-            <div id="drafts-loading-indicator" class="flex justify-center items-center h-48">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-blue-500 animate-spin mr-3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                <span class="text-xl text-gray-500">Loading drafts...</span>
-            </div>
-
-            <div id="drafts-list" class="space-y-6">
-                <!-- Drafts will be dynamically inserted here -->
-            </div>
-            
-            <div id="drafts-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 mx-auto mb-3"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
-                <p class="text-lg font-medium">No drafts saved. Start writing some new ideas!</p>
-                <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition">
-                    Write Draft
-                </a>
-            </div>
-        </section>
-
+    <div id="user-info" class="mt-4 text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center break-words mb-6">
+      <span class="font-semibold text-blue-700 mr-2">Signed in as:</span>
+      <span id="user-id-display" class="font-bold">Guest</span>
     </div>
 
-    <!-- Firebase and Application Logic -->
-    <script type="module">
-        // Import Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            signInAnonymously, 
-            signInWithCustomToken, 
-            onAuthStateChanged,
-            setPersistence,
-            inMemoryPersistence,
-            // Removed Email/Password Auth imports
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            collection, 
-            query, 
-            onSnapshot, 
-            addDoc, 
-            deleteDoc, 
-            updateDoc,
-            Timestamp, 
-            setLogLevel,
-            writeBatch, // Import writeBatch for deleting subcollections
-            getDocs,
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- HOME PAGE -->
+    <section id="home-page" class="page-content">
+      <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Finalized Entries</h2>
+      <div id="final-entries-list" class="space-y-6"></div>
+      <div id="home-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
+        <p class="text-lg font-medium">No final entries found. Start writing your first thought!</p>
+        <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">Write Now</a>
+      </div>
+    </section>
 
-        // --- GLOBAL ENVIRONMENT VARS (Provided by the execution environment) ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <!-- WRITE PAGE -->
+    <section id="write-page" class="page-content">
+      <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Write New Entry</h2>
+      <form id="new-entry-form" class="p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
+        <textarea id="new-entry-text" rows="8" class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 resize-none text-gray-800" placeholder="Write your diary entry here."></textarea>
+        <div class="mt-4 flex space-x-4">
+          <button type="submit" data-action="final" id="save-final-button" class="flex-1 px-6 py-3 text-lg font-bold text-white rounded-lg shadow-md transition duration-200 bg-blue-600 hover:bg-blue-700">Save as Final Entry</button>
+          <button type="submit" data-action="draft" id="save-draft-button" class="flex-1 px-6 py-3 text-lg font-bold rounded-lg shadow-md transition duration-200 bg-gray-600 text-white hover:bg-gray-700">Save as Draft</button>
+        </div>
+      </form>
+    </section>
 
-        // --- FIREBASE INITIALIZATION ---
-        setLogLevel('debug'); // Enable Firestore logging
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        setPersistence(auth, inMemoryPersistence); 
+    <!-- DRAFTS PAGE -->
+    <section id="drafts-page" class="page-content">
+      <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Drafts (<span id="drafts-header-count">0</span>)</h2>
+      <div id="drafts-list" class="space-y-6"></div>
+      <div id="drafts-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
+        <p class="text-lg font-medium">No drafts saved. Start writing some new ideas!</p>
+        <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition">Write Draft</a>
+      </div>
+    </section>
+  </div>
 
-        // State variables for the app's current user
-        let currentUserId = null; // The Firestore document ID of the selected user profile
-        let currentUsername = 'Guest';
-        
-        let allUsers = []; // List of public user profiles
-        let unsubscribeAll = null; // Firestore listener for entries
+  <script>
+    // ---------- Storage & state ----------
+    const USERS_KEY = 'pj_users_v2';
+    const ENTRIES_KEY = 'pj_entries_v2';
+    const SELECTED_USER_KEY = 'pj_selected_user_v2';
+    let users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+    let entries = JSON.parse(localStorage.getItem(ENTRIES_KEY)) || [];
+    let currentUser = localStorage.getItem(SELECTED_USER_KEY) || null;
 
-        // --- UI UTILITY FUNCTIONS ---
-        
-        function showMessage(type, message) {
-            const mainDiv = document.getElementById('error-message');
-            const mainText = document.getElementById('error-text');
-            const authDiv = document.getElementById('auth-error-message');
-            const authText = document.getElementById('auth-error-text');
+    // ---------- Helpers ----------
+    const uid = () => Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+    const nowISO = () => new Date().toISOString();
 
-            const targetDiv = currentUserId ? mainDiv : authDiv;
-            const targetText = currentUserId ? mainText : authText;
-            
-            // Clear all messages first
-            mainDiv.classList.add('hidden');
-            authDiv.classList.add('hidden');
-
-            if (message) {
-                targetDiv.classList.remove('hidden');
-                targetDiv.className = `px-4 py-3 rounded relative mb-6 ${type === 'error' ? 'bg-red-100 border-red-400 text-red-700' : 'bg-green-100 border-green-400 text-green-700'}`;
-                targetText.innerHTML = message;
-
-                // Clear temporary messages after a few seconds
-                if (type !== 'error') {
-                     setTimeout(() => {
-                        targetDiv.classList.add('hidden');
-                        targetText.innerHTML = '';
-                    }, 5000);
-                }
-            }
-        }
-
-        function setSavingState(isSaving, action) {
-            const finalBtn = document.getElementById('save-final-button');
-            const draftBtn = document.getElementById('save-draft-button');
-            const textarea = document.getElementById('new-entry-text');
-            
-            finalBtn.disabled = isSaving;
-            draftBtn.disabled = isSaving;
-            textarea.disabled = isSaving;
-
-            if (isSaving) {
-                const buttonToSpin = action === 'final' ? finalBtn : draftBtn;
-                const buttonToHide = action === 'final' ? draftBtn : finalBtn;
-                
-                buttonToSpin.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2 animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving...';
-                buttonToSpin.classList.add('bg-gray-400', 'cursor-not-allowed');
-                buttonToSpin.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800', 'bg-gray-600', 'hover:bg-gray-700', 'active:bg-gray-800');
-                
-                buttonToHide.style.display = 'none';
-
-            } else {
-                finalBtn.innerHTML = 'Save as Final Entry';
-                draftBtn.innerHTML = 'Save as Draft';
-                finalBtn.style.display = 'flex';
-                draftBtn.style.display = 'flex';
-
-                finalBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                finalBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
-
-                draftBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                draftBtn.classList.add('bg-gray-600', 'hover:bg-gray-700', 'active:bg-gray-800');
-            }
-        }
-
-        const formatDate = (timestamp) => {
-            if (!timestamp || !timestamp.toDate) return 'Unknown Date';
-            const date = timestamp.toDate();
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
+    // ---------- User management ----------
+    const renderUserList = () => {
+      const listDiv = document.getElementById('user-list');
+      listDiv.innerHTML = '';
+      const names = Object.keys(users);
+      if (!names.length) { listDiv.innerHTML = '<div class="text-center text-gray-500 p-2">No users found. Create one above!</div>'; return; }
+      names.forEach(u => {
+        const container = document.createElement('div');
+        container.className = 'flex justify-between items-center';
+        const btn = document.createElement('button');
+        btn.innerText = u;
+        btn.className = 'flex-1 text-left py-2 px-3 bg-gray-100 rounded hover:bg-gray-200';
+        btn.onclick = () => { currentUser = u; localStorage.setItem(SELECTED_USER_KEY, currentUser); showApp(); };
+        const delBtn = document.createElement('button');
+        delBtn.innerText = 'Delete';
+        delBtn.className = 'ml-2 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700';
+        delBtn.onclick = () => {
+          if(confirm(`Are you sure you want to delete "${u}" and all their entries?`)){
+            delete users[u];
+            entries = entries.filter(e => e.user !== u);
+            if(currentUser===u) currentUser=null;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+            localStorage.setItem(SELECTED_USER_KEY, currentUser || '');
+            renderUserList();
+            showApp();
+          }
         };
+        container.appendChild(btn); container.appendChild(delBtn);
+        listDiv.appendChild(container);
+      });
+    };
 
-        // --- TTS UTILITY FUNCTIONS (Same as before) ---
-        function base64ToArrayBuffer(base64) {
-            const binaryString = window.atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
+    document.getElementById('new-user-form').onsubmit = e => {
+      e.preventDefault();
+      const val = document.getElementById('new-username').value.trim();
+      if(!val){ alert('Username cannot be empty'); return; }
+      if(users[val]){ alert('Username exists'); return; }
+      users[val]={ created: nowISO() };
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      document.getElementById('new-username').value='';
+      currentUser=val;
+      localStorage.setItem(SELECTED_USER_KEY, currentUser);
+      renderUserList();
+      showApp();
+    };
 
-        function pcmToWav(pcm16, sampleRate = 16000) {
-            const numChannels = 1;
-            const numSamples = pcm16.length;
-            const bytesPerSample = 2; 
+    // ---------- App ----------
+    const showApp = () => {
+      if(!currentUser){ document.getElementById('user-management-page').style.display='block'; document.getElementById('main-app-content').style.display='none'; return; }
+      document.getElementById('user-management-page').style.display='none';
+      document.getElementById('main-app-content').style.display='block';
+      document.getElementById('user-id-display').innerText=currentUser;
+      renderEntries();
+    };
 
-            const wavBuffer = new ArrayBuffer(44 + numSamples * bytesPerSample);
-            const view = new DataView(wavBuffer);
+    const renderEntries = () => {
+      const finalList = document.getElementById('final-entries-list');
+      const draftList = document.getElementById('drafts-list');
+      const finalEntries = entries.filter(e=>e.user===currentUser && !e.draft);
+      const drafts = entries.filter(e=>e.user===currentUser && e.draft);
+      finalList.innerHTML=''; draftList.innerHTML='';
+      if(!finalEntries.length) document.getElementById('home-empty-state').classList.remove('hidden'); else document.getElementById('home-empty-state').classList.add('hidden');
+      if(!drafts.length) document.getElementById('drafts-empty-state').classList.remove('hidden'); else document.getElementById('drafts-empty-state').classList.add('hidden');
+      document.getElementById('drafts-count').innerText=drafts.length;
+      document.getElementById('drafts-header-count').innerText=drafts.length;
 
-            let offset = 0;
-            view.setUint32(offset, 0x52494646, false); offset += 4; // "RIFF"
-            view.setUint32(offset, 36 + numSamples * bytesPerSample, true); offset += 4;
-            view.setUint32(offset, 0x57415645, false); offset += 4; // 'WAVE'
-            view.setUint32(offset, 0x666d7420, false); offset += 4; // 'fmt '
-            view.setUint32(offset, 16, true); offset += 4;
-            view.setUint16(offset, 1, true); offset += 2;
-            view.setUint16(offset, numChannels, true); offset += 2;
-            view.setUint32(offset, sampleRate, true); offset += 4;
-            view.setUint32(offset, sampleRate * bytesPerSample * numChannels, true); offset += 4;
-            view.setUint16(offset, bytesPerSample * numChannels, true); offset += 2;
-            view.setUint16(offset, 16, true); offset += 2;
-            view.setUint32(offset, 0x64617461, false); offset += 4; // 'data'
-            view.setUint32(offset, numSamples * bytesPerSample, true); offset += 4;
+      // Final entries with delete option
+      finalEntries.forEach(e=>{
+        const div = document.createElement('div');
+        div.className='bg-white p-5 border-l-4 border-blue-400 shadow-md rounded-lg mb-2 flex justify-between items-start';
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Final)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
+        const delBtn = document.createElement('button');
+        delBtn.innerText='Delete';
+        delBtn.className='ml-4 bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
+        delBtn.onclick=()=>{
+          if(confirm('Delete this entry?')){
+            entries=entries.filter(x=>x!==e);
+            localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+            renderEntries();
+          }
+        };
+        div.appendChild(contentDiv); div.appendChild(delBtn); finalList.appendChild(div);
+      });
 
-            for (let i = 0; i < numSamples; i++) {
-                view.setInt16(offset, pcm16[i], true);
-                offset += 2;
-            }
+      // Draft entries
+      drafts.forEach(e=>{
+        const div = document.createElement('div');
+        div.className='bg-white p-5 border-l-4 border-gray-400 shadow-md rounded-lg mb-2 flex justify-between items-start';
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Draft)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
+        const actions=document.createElement('div');
+        const finalizeBtn=document.createElement('button');
+        finalizeBtn.innerText='Finalize';
+        finalizeBtn.className='bg-blue-600 text-white px-2 py-1 rounded mb-1 hover:bg-blue-700';
+        finalizeBtn.onclick=()=>{ e.draft=false; localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); };
+        const delBtn=document.createElement('button');
+        delBtn.innerText='Delete';
+        delBtn.className='bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
+        delBtn.onclick=()=>{ entries=entries.filter(x=>x!==e); localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); };
+        actions.appendChild(finalizeBtn); actions.appendChild(delBtn); div.appendChild(contentDiv); div.appendChild(actions); draftList.appendChild(div);
+      });
+    };
 
-            return new Blob([wavBuffer], { type: 'audio/wav' });
-        }
+    document.getElementById('new-entry-form').onsubmit=e=>{
+      e.preventDefault();
+      const val=document.getElementById('new-entry-text').value.trim();
+      if(!val){ alert('Cannot save empty entry'); return; }
+      const isDraft=e.submitter.dataset.action==='draft';
+      entries.push({ user: currentUser, text: val, draft:isDraft, time: nowISO() });
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+      document.getElementById('new-entry-text').value='';
+      alert(isDraft?'Draft saved successfully!':'Final entry saved successfully!');
+      showApp();
+    };
 
-        // --- API & DATA FUNCTIONS ---
+    document.getElementById('logout-button').onclick=()=>{
+      currentUser=null; localStorage.setItem(SELECTED_USER_KEY,''); showApp();
+    };
 
-        async function speakEntry(entryText) {
-            if (!entryText) return;
-            
-            showMessage('info', 'Generating speech, please wait...');
+    // ---------- Routing ----------
+    window.addEventListener('hashchange', ()=>{ const h=window.location.hash||'#home'; document.querySelectorAll('.page-content').forEach(p=>p.style.display='none'); const el=document.querySelector(h+'-page'); if(el) el.style.display='block'; });
 
-            // TTS implementation remains the same
-            try {
-                const payload = {
-                    contents: [{ parts: [{ text: `Say in a gentle, warm tone: ${entryText}` }] }],
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Vindemiatrix" } } }
-                    },
-                    model: "gemini-2.5-flash-preview-tts"
-                };
-                
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-                
-                const maxRetries = 3; let attempt = 0; let audioData = null; let mimeType = null;
-                
-                while (attempt < maxRetries) {
-                    attempt++;
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                        });
-
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        const result = await response.json();
-                        const part = result?.candidates?.[0]?.content?.parts?.[0];
-                        audioData = part?.inlineData?.data;
-                        mimeType = part?.inlineData?.mimeType;
-
-                        if (audioData && mimeType && mimeType.startsWith("audio/L16")) break;
-                        else throw new Error("Invalid audio response structure or mime type.");
-
-                    } catch (e) {
-                        console.error(`Attempt ${attempt} failed:`, e);
-                        if (attempt < maxRetries) {
-                            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
-                        } else {
-                            throw e;
-                        }
-                    }
-                }
-                
-                if (audioData && mimeType) {
-                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
-                    
-                    const pcmData = base64ToArrayBuffer(audioData);
-                    const pcm16 = new Int16Array(pcmData);
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-                    
-                    const audio = new Audio(audioUrl);
-                    audio.play();
-                    
-                    audio.onended = () => {
-                        URL.revokeObjectURL(audioUrl);
-                        showMessage(null, '');
-                    };
-                } else {
-                    showMessage('error', "Failed to generate audio.");
-                }
-
-            } catch (e) {
-                console.error("TTS request error:", e);
-                showMessage('error', "TTS failed due to an API error.");
-            }
-        }
-
-        async function saveNewEntry(event, isDraft) {
-            event.preventDefault();
-            const textarea = document.getElementById('new-entry-text');
-            const text = textarea.value.trim();
-
-            if (!text || !currentUserId) {
-                showMessage('error', "Diary entry cannot be empty or user not signed in.");
-                return;
-            }
-            
-            showMessage(null, '');
-            setSavingState(true, isDraft ? 'draft' : 'final');
-            
-            // NEW PUBLIC COLLECTION PATH
-            const collectionPath = `artifacts/${appId}/public/data/all_diary_entries`;
-
-            try {
-                await addDoc(collection(db, collectionPath), {
-                    text: text,
-                    timestamp: Timestamp.now(),
-                    isDraft: isDraft, 
-                    profileId: currentUserId, // Store the user ID for segregation
-                });
-                textarea.value = '';
-                showMessage('success', isDraft ? 'Draft saved successfully!' : 'Final entry saved successfully!');
-                
-                if (!isDraft) {
-                    window.location.hash = 'home';
-                } else {
-                    window.location.hash = 'drafts';
-                }
-
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                showMessage('error', "Failed to save entry. Check console.");
-            } finally {
-                setSavingState(false);
-            }
-        }
-        
-        async function finalizeDraft(id) {
-            if (!currentUserId) return;
-            
-            const confirmation = prompt("Type 'FINALIZE' to move this draft to your main entries.");
-            if (confirmation !== 'FINALIZE') return;
-
-            // NEW PUBLIC DOCUMENT PATH
-            const docPath = `artifacts/${appId}/public/data/all_diary_entries/${id}`;
-
-            try {
-                await updateDoc(doc(db, docPath), {
-                    isDraft: false,
-                    timestamp: Timestamp.now()
-                });
-                showMessage('success', 'Draft finalized and moved to Home Page!');
-            } catch (e) {
-                console.error("Error finalizing draft: ", e);
-                showMessage('error', "Failed to finalize draft.");
-            }
-        }
-
-        async function deleteEntry(id) {
-            if (!currentUserId) return;
-            
-            const confirmation = prompt("Type 'DELETE' to permanently remove this entry.");
-            if (confirmation !== 'DELETE') return;
-
-            // NEW PUBLIC DOCUMENT PATH
-            const docPath = `artifacts/${appId}/public/data/all_diary_entries/${id}`;
-
-            try {
-                await deleteDoc(doc(db, docPath));
-                showMessage('success', 'Entry deleted successfully.');
-            } catch (e) {
-                console.error("Error deleting document: ", e);
-                showMessage('error', "Failed to delete entry.");
-            }
-        }
-        
-        // --- USER MANAGEMENT FUNCTIONS (New logic) ---
-        
-        function updateDeletePanel(userId, username) {
-            const panel = document.getElementById('delete-user-panel');
-            if (userId) {
-                document.getElementById('current-user-to-delete').textContent = username;
-                panel.classList.remove('hidden');
-            } else {
-                panel.classList.add('hidden');
-            }
-        }
-
-        function renderUserList() {
-            const list = document.getElementById('user-list');
-            list.innerHTML = '';
-            
-            if (allUsers.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-500 p-2">No users found. Create one above!</div>';
-                return;
-            }
-
-            allUsers.forEach(user => {
-                // Main container for the user item
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'flex justify-between items-center w-full text-left p-3 border border-blue-300 bg-blue-50 rounded-md hover:bg-blue-100 transition duration-150 text-blue-800 font-medium truncate';
-                
-                // Username display (clickable to select user)
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = user.username;
-                nameSpan.className = 'cursor-pointer flex-grow hover:underline';
-                nameSpan.onclick = () => selectUser(user.id, user.username);
-
-                // Delete Icon Button
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'p-1 ml-4 text-red-600 hover:text-red-800 transition duration-150 rounded-full hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500';
-                deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M15 6V4c0-1-1-2-2-2h-2c-1 0-2 1-2 2v2"/></svg>';
-                deleteBtn.title = `Delete ${user.username} Profile`;
-                
-                // Click handler for delete icon
-                deleteBtn.onclick = (e) => {
-                    e.stopPropagation(); // Prevent selectUser from firing
-                    deleteUser(user.id, user.username);
-                };
-
-                itemDiv.appendChild(nameSpan);
-                itemDiv.appendChild(deleteBtn);
-                list.appendChild(itemDiv);
-            });
-        }
-
-        function selectUser(userId, username) {
-            // Set the app's internal user state
-            currentUserId = userId;
-            currentUsername = username;
-            
-            // Update UI on main app screen
-            document.getElementById('user-id-display').textContent = currentUsername;
-            showMessage('success', `Signed in as ${currentUsername}!`);
-            
-            // Update UI on user management screen
-            updateDeletePanel(userId, username);
-
-            // Start loading their private diary entries
-            startDataListeners();
-            
-            // Navigate to home page
-            window.location.hash = '#home';
-        }
-
-        async function handleNewUser(e) {
-            e.preventDefault();
-            const usernameInput = document.getElementById('new-username');
-            const username = usernameInput.value.trim();
-
-            if (!username) {
-                showMessage('error', "Username cannot be empty.");
-                return;
-            }
-            
-            if (allUsers.some(user => user.username === username)) {
-                showMessage('error', "This username already exists.");
-                return;
-            }
-
-            const button = document.getElementById('create-user-button');
-            button.disabled = true;
-            button.innerHTML = 'Creating...';
-
-            try {
-                // Public data path: artifacts/{appId}/public/data/users
-                const publicUsersCollection = collection(db, `artifacts/${appId}/public/data/users`);
-                const docRef = await addDoc(publicUsersCollection, {
-                    username: username,
-                    createdAt: Timestamp.now()
-                });
-
-                // Immediately sign in as the newly created user
-                selectUser(docRef.id, username);
-                usernameInput.value = '';
-
-            } catch (e) {
-                console.error("Error creating new user:", e);
-                showMessage('error', "Failed to create new user profile.");
-            } finally {
-                button.disabled = false;
-                button.innerHTML = 'Create & Sign In';
-            }
-        }
-        
-        async function deleteUser(idToDelete, usernameToDelete) {
-            if (!idToDelete) return;
-            
-            const confirmation = prompt(`Type "DELETE ${usernameToDelete}" to permanently remove the user and all their diary data. This cannot be undone.`);
-            if (confirmation !== `DELETE ${usernameToDelete}`) {
-                showMessage('info', 'User deletion cancelled.');
-                return;
-            }
-
-            showMessage('info', `Deleting user ${usernameToDelete} and all their data...`);
-            
-            // Use the panel button only if the user is currently signed in
-            const deleteButton = document.getElementById('delete-user-button');
-            if (currentUserId === idToDelete) {
-                deleteButton.disabled = true;
-                deleteButton.textContent = 'Deleting...';
-            }
-            
-            const originalButtonText = deleteButton.textContent;
-
-
-            try {
-                // 1. Delete all private entries associated with this profileId (from the public collection)
-                const entriesRef = collection(db, `artifacts/${appId}/public/data/all_diary_entries`);
-                
-                // Note: We cannot query by profileId AND delete via batch in this environment due to index issues.
-                // We fetch all entries and filter locally, then batch delete the matching ones.
-                const snapshot = await getDocs(query(entriesRef));
-                
-                const entriesToDelete = snapshot.docs.filter(doc => doc.data().profileId === idToDelete);
-
-                if (entriesToDelete.length > 0) {
-                    const batch = writeBatch(db);
-                    entriesToDelete.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    await batch.commit();
-                }
-
-                // 2. Delete the public user profile
-                const userDocRef = doc(db, `artifacts/${appId}/public/data/users/${idToDelete}`);
-                await deleteDoc(userDocRef);
-
-                showMessage('success', `User ${usernameToDelete} and all associated data have been deleted.`);
-                
-            } catch (e) {
-                console.error("Error deleting user:", e);
-                showMessage('error', `Failed to delete user ${usernameToDelete}. Check console.`);
-            } finally {
-                // Reset state and return to user selection
-                if (currentUserId === idToDelete) {
-                    deleteButton.disabled = false;
-                    deleteButton.textContent = originalButtonText;
-                    handleSwitchUser(); 
-                } else {
-                    deleteButton.disabled = false;
-                    deleteButton.textContent = originalButtonText;
-                    // Just re-render user list to reflect deletion
-                    renderUserList(); 
-                }
-            }
-        }
-
-        
-        function handleSwitchUser() {
-             // Clear the current user state and navigate to the user management page
-            currentUserId = null;
-            currentUsername = 'Guest';
-            document.getElementById('user-id-display').textContent = 'Not Signed In';
-            
-            // Stop listening to the previous user's data
-            if (unsubscribeAll) unsubscribeAll();
-
-            // Clear the data lists
-            document.getElementById('final-entries-list').innerHTML = '';
-            document.getElementById('drafts-list').innerHTML = '';
-            
-            updateDeletePanel(null, null); // Hide delete panel
-            window.location.hash = '#manage-users';
-        }
-
-        // --- AUTH AND INITIALIZATION FUNCTION (REPLACING onAuthStateChanged) ---
-        async function initAuthAndListeners() {
-            
-            // 1. Attempt to sign in (using token or anonymously)
-            try {
-                if (initialAuthToken) {
-                    // Try custom token sign-in first
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    // Guarantee anonymous sign-in to satisfy request.auth != null rule
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.error("Initial sign-in failed:", e);
-                showMessage('error', "Initialization failed. Cannot access data due to authentication error.");
-            }
-
-            // 2. Auth is confirmed (or failed, but we still proceed). Start public listener and routing.
-            // The router will show the user management page if currentUserId is null.
-            startUserListener();
-            router();
-        }
-
-        // 2. Public User List Listener
-        function startUserListener() {
-            // Path: artifacts/{appId}/public/data/users
-            const publicUsersCollection = collection(db, `artifacts/${appId}/public/data/users`);
-            const q = query(publicUsersCollection);
-
-            onSnapshot(q, (snapshot) => {
-                allUsers = snapshot.docs.map(doc => ({ 
-                    id: doc.id, 
-                    ...doc.data() 
-                }));
-                renderUserList();
-            }, (error) => {
-                console.error("Error fetching public user list:", error);
-                document.getElementById('user-list-loading').textContent = 'Failed to load users. (Permission check failure)';
-                showMessage('error', "Authentication failure: Cannot access user list. Please ensure Firebase Auth is initialized.");
-            });
-        }
-
-
-        // 3. Private Diary Data Listener (Starts ONLY after a user is selected)
-        function startDataListeners() {
-            if (unsubscribeAll) unsubscribeAll(); 
-            
-            // NEW PUBLIC COLLECTION PATH (7 segments, public access)
-            const collectionPath = `artifacts/${appId}/public/data/all_diary_entries`;
-            const entriesCollectionRef = collection(db, collectionPath);
-            
-            const q = query(entriesCollectionRef); // Fetch ALL entries (then filter in JS)
-
-            // Real-time listener
-            unsubscribeAll = onSnapshot(q, (snapshot) => {
-                const allEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                // FILTERING STEP: Filter entries by the currently selected user's profileId
-                const userEntries = allEntries.filter(entry => entry.profileId === currentUserId);
-
-                // Filter and sort in JavaScript
-                renderEntries(userEntries, false); // Render Final Entries (isDraft=false)
-                renderEntries(userEntries, true);  // Render Drafts (isDraft=true)
-                
-                // Hide loading indicators after data fetch is complete
-                document.getElementById('home-loading-indicator').style.display = 'none';
-                document.getElementById('drafts-loading-indicator').style.display = 'none';
-
-            }, (error) => {
-                console.error("Error fetching all entries:", error);
-                document.getElementById('home-loading-indicator').innerHTML = '<span class="text-xl text-red-500">Failed to load entries. Check console.</span>';
-                document.getElementById('drafts-loading-indicator').innerHTML = '<span class="text-xl text-red-500">Failed to load drafts. Check console.</span>';
-            });
-        }
-
-
-        // --- RENDERING FUNCTIONS (Unchanged logic) ---
-        
-        function renderEntries(entries, isDraft) {
-            const listId = isDraft ? 'drafts-list' : 'final-entries-list';
-            const emptyStateId = isDraft ? 'drafts-empty-state' : 'home-empty-state';
-            const loadingId = isDraft ? 'drafts-loading-indicator' : 'home-loading-indicator';
-            
-            const list = document.getElementById(listId);
-            const emptyState = document.getElementById(emptyStateId);
-            // loading indicator is hidden globally in startDataListeners
-            
-            const filteredEntries = entries.filter(entry => entry.isDraft === isDraft);
-            const sortedEntries = filteredEntries.sort((a, b) => {
-                const timeA = a.timestamp.toDate ? a.timestamp.toDate().getTime() : 0;
-                const timeB = b.timestamp.toDate ? b.timestamp.toDate().getTime() : 0;
-                return timeB - timeA;
-            });
-            
-            if (isDraft) {
-                document.getElementById('drafts-count').textContent = sortedEntries.length;
-                document.getElementById('drafts-header-count').textContent = sortedEntries.length;
-            } 
-
-            list.innerHTML = ''; 
-
-            if (sortedEntries.length === 0) {
-                emptyState.classList.remove('hidden');
-                return;
-            }
-            emptyState.classList.add('hidden');
-
-            sortedEntries.forEach(entry => {
-                const entryDiv = document.createElement('div');
-                entryDiv.className = `bg-white p-5 border-l-4 ${isDraft ? 'border-gray-400' : 'border-blue-400'} shadow-md rounded-lg hover:shadow-lg transition duration-150`;
-                
-                const buttonHTML = isDraft ? `
-                    <button class="finalize-button p-2 text-sm text-blue-700 bg-blue-100 rounded-full hover:bg-blue-200 transition duration-150" title="Finalize Draft" data-id="${entry.id}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-                    </button>
-                ` : '';
-
-                entryDiv.innerHTML = `
-                    <p class="text-sm font-medium text-gray-500 mb-2 border-b pb-2">
-                        ${formatDate(entry.timestamp)}
-                        <span class="ml-2 font-bold ${isDraft ? 'text-gray-600' : 'text-blue-600'}">(${isDraft ? 'Draft' : 'Final'})</span>
-                    </p>
-                    <p class="text-gray-800 whitespace-pre-wrap leading-relaxed">
-                        ${entry.text}
-                    </p>
-                    <div class="mt-4 flex justify-end space-x-2">
-                        ${buttonHTML}
-                        <button class="tts-button p-2 text-sm text-green-700 bg-green-100 rounded-full hover:bg-green-200 transition duration-150" title="Listen to Entry (TTS)" data-text="${entry.text}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                        </button>
-                        <button class="delete-button p-2 text-sm text-red-700 bg-red-100 rounded-full hover:bg-red-200 transition duration-150" title="Delete Entry" data-id="${entry.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M15 6V4c0-1-1-2-2-2h-2c-1 0-2 1-2 2v2"/></svg>
-                        </button>
-                    </div>
-                `;
-                
-                entryDiv.querySelector('.delete-button').addEventListener('click', () => deleteEntry(entry.id));
-                entryDiv.querySelector('.tts-button').addEventListener('click', (e) => speakEntry(e.currentTarget.getAttribute('data-text')));
-                
-                if (isDraft) {
-                    entryDiv.querySelector('.finalize-button').addEventListener('click', () => finalizeDraft(entry.id));
-                }
-
-                list.appendChild(entryDiv);
-            });
-        }
-        
-        // --- ROUTING LOGIC ---
-
-        function updateNavigation(hash) {
-            document.querySelectorAll('.nav-link').forEach(link => {
-                if (link.getAttribute('href') === hash) {
-                    link.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
-                } else {
-                    link.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
-                }
-            });
-        }
-
-        function router() {
-            // Check if a user profile is selected (simulated login)
-            if (!currentUserId) {
-                document.getElementById('user-management-page').style.display = 'block';
-                document.getElementById('main-app-content').style.display = 'none';
-                updateDeletePanel(null, null); // Hide panel if not logged in
-                return;
-            }
-            
-            // If user is selected, show main app and route internal pages
-            document.getElementById('user-management-page').style.display = 'none';
-            document.getElementById('main-app-content').style.display = 'block';
-            updateDeletePanel(currentUserId, currentUsername); // Show panel if logged in
-
-            let hash = window.location.hash || '#home';
-            hash = hash.split('?')[0]; 
-            
-            document.querySelectorAll('.page-content').forEach(page => {
-                page.style.display = 'none';
-            });
-
-            const currentPage = document.querySelector(hash + '-page');
-            if (currentPage) {
-                currentPage.style.display = 'block';
-            } else {
-                document.getElementById('home-page').style.display = 'block';
-                hash = '#home';
-            }
-            
-            updateNavigation(hash);
-        }
-
-        // --- EVENT LISTENERS ---
-        window.addEventListener('hashchange', router);
-        document.addEventListener('DOMContentLoaded', initAuthAndListeners);
-        document.getElementById('new-user-form').onsubmit = handleNewUser;
-        document.getElementById('logout-button').addEventListener('click', handleSwitchUser);
-        document.getElementById('delete-user-button').addEventListener('click', () => deleteUser(currentUserId, currentUsername));
-        document.getElementById('save-final-button').addEventListener('click', (e) => saveNewEntry(e, false));
-        document.getElementById('save-draft-button').addEventListener('click', (e) => saveNewEntry(e, true));
-        
-    </script>
+    // ---------- Init ----------
+    renderUserList(); showApp();
+    if(!window.location.hash) window.location.hash='#home';
+    window.dispatchEvent(new Event('hashchange'));
+  </script>
 </body>
 </html>
