@@ -6,17 +6,124 @@
   <title>Personal Journal - Multi-User</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
-    textarea { transition: all .15s ease-in-out; }
-    ::-webkit-scrollbar { width: 8px; }
+    /* ---------- Body & Base Styles ---------- */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      color: #1e293b;
+      transition: background 0.3s ease;
+    }
+
+    /* ---------- Smooth Page Transitions ---------- */
+    .page-content {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .35s ease, transform .35s ease;
+      display: none;
+    }
+    .page-content.active {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+
+    /* ---------- Scrollbar ---------- */
+    ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    .page-content { display: none; }
-    #user-management-page { display: none; }
+
+    /* ---------- Apple-style Navbar ---------- */
+    nav {
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(16px);
+      border-radius: 16px;
+      padding: 10px 14px !important;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+    }
+    .nav-link {
+      border-radius: 14px;
+      padding: 9px 14px !important;
+      font-weight: 600 !important;
+      background: #eef2f5 !important;
+      color: #475569 !important;
+      transition: all .2s ease;
+    }
+    .nav-link:hover { background: #e2e8f0 !important; }
+
+    /* ---------- Buttons ---------- */
+    button {
+      border-radius: 12px !important;
+      font-weight: 600;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    button:hover { transform: scale(1.04); opacity: .95; }
+
+    /* ---------- Cards & Sections ---------- */
+    #user-management-page,
+    #main-app-content,
+    #final-entries-list > div,
+    #drafts-list > div,
+    form {
+      background: #ffffff;
+      border-radius: 22px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+    #final-entries-list > div:hover,
+    #drafts-list > div:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+    }
+
+    /* ---------- Textarea ---------- */
+    textarea {
+      background: #fffceb;
+      border: 1px solid #f1e7b6 !important;
+      border-radius: 14px;
+      padding: 14px;
+      line-height: 1.6;
+      transition: all 0.2s ease;
+      resize: none;
+    }
+    textarea:focus {
+      background: #fff9d7;
+      border-color: #f4d96b !important;
+      box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.25);
+    }
+
+    /* ---------- Toast Notification ---------- */
+    #apple-toast {
+      position: fixed;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(255,255,255,0.85);
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 6px 20px rgba(0,0,0,.12);
+      backdrop-filter: blur(14px);
+      padding: 12px 20px;
+      border-radius: 16px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .35s ease;
+      z-index: 1000;
+    }
+    #apple-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0px);
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4 sm:p-8">
+
+  <!-- ---------- Toast ---------- -->
+  <div id="apple-toast"></div>
 
   <!-- USER MANAGEMENT PAGE -->
   <div id="user-management-page" class="w-full max-w-md bg-white shadow-xl rounded-xl p-8 sm:p-10 border border-gray-100 mt-10">
@@ -45,7 +152,7 @@
   </div>
 
   <!-- MAIN APP -->
-  <div id="main-app-content" class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100" style="display:none;">
+  <div id="main-app-content" class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100">
     <header class="mb-6 pb-4 border-b border-gray-200">
       <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" class="w-8 h-8 mr-3 text-blue-500"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
@@ -112,6 +219,13 @@
     const uid = () => Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
     const nowISO = () => new Date().toISOString();
 
+    function appleToast(msg) {
+      const t = document.getElementById("apple-toast");
+      t.innerText = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2300);
+    }
+
     // ---------- User management ----------
     const renderUserList = () => {
       const listDiv = document.getElementById('user-list');
@@ -148,8 +262,8 @@
     document.getElementById('new-user-form').onsubmit = e => {
       e.preventDefault();
       const val = document.getElementById('new-username').value.trim();
-      if(!val){ alert('Username cannot be empty'); return; }
-      if(users[val]){ alert('Username exists'); return; }
+      if(!val){ appleToast('Username cannot be empty'); return; }
+      if(users[val]){ appleToast('Username exists'); return; }
       users[val]={ created: nowISO() };
       localStorage.setItem(USERS_KEY, JSON.stringify(users));
       document.getElementById('new-username').value='';
@@ -208,11 +322,11 @@
         const finalizeBtn=document.createElement('button');
         finalizeBtn.innerText='Finalize';
         finalizeBtn.className='bg-blue-600 text-white px-2 py-1 rounded mb-1 hover:bg-blue-700';
-        finalizeBtn.onclick=()=>{ e.draft=false; localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); };
+        finalizeBtn.onclick=()=>{ e.draft=false; localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); appleToast('Draft finalized'); };
         const delBtn=document.createElement('button');
         delBtn.innerText='Delete';
         delBtn.className='bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
-        delBtn.onclick=()=>{ entries=entries.filter(x=>x!==e); localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); };
+        delBtn.onclick=()=>{ entries=entries.filter(x=>x!==e); localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); appleToast('Draft deleted'); };
         actions.appendChild(finalizeBtn); actions.appendChild(delBtn); div.appendChild(contentDiv); div.appendChild(actions); draftList.appendChild(div);
       });
     };
@@ -220,12 +334,12 @@
     document.getElementById('new-entry-form').onsubmit=e=>{
       e.preventDefault();
       const val=document.getElementById('new-entry-text').value.trim();
-      if(!val){ alert('Cannot save empty entry'); return; }
+      if(!val){ appleToast('Cannot save empty entry'); return; }
       const isDraft=e.submitter.dataset.action==='draft';
       entries.push({ user: currentUser, text: val, draft:isDraft, time: nowISO() });
       localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
       document.getElementById('new-entry-text').value='';
-      alert(isDraft?'Draft saved successfully!':'Final entry saved successfully!');
+      appleToast(isDraft?'Draft saved successfully!':'Final entry saved successfully!');
       showApp();
     };
 
@@ -234,7 +348,12 @@
     };
 
     // ---------- Routing ----------
-    window.addEventListener('hashchange', ()=>{ const h=window.location.hash||'#home'; document.querySelectorAll('.page-content').forEach(p=>p.style.display='none'); const el=document.querySelector(h+'-page'); if(el) el.style.display='block'; });
+    window.addEventListener('hashchange', ()=>{
+      const h=window.location.hash||'#home';
+      document.querySelectorAll('.page-content').forEach(p=>{p.classList.remove('active'); p.style.display='none';});
+      const el=document.querySelector(h+'-page');
+      if(el){ el.style.display='block'; setTimeout(()=>el.classList.add('active'), 10); }
+    });
 
     // ---------- Init ----------
     renderUserList(); showApp();
