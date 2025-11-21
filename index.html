@@ -5,104 +5,108 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Personal Journal - Multi-User</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
-    /* ---------- Body & Base Styles ---------- */
     body {
       font-family: 'Inter', sans-serif;
       background: #f5f7fa;
       min-height: 100vh;
       color: #1e293b;
-      transition: background 0.3s ease;
+      transition: background .3s ease;
     }
 
-    /* ---------- Smooth Page Transitions ---------- */
     .page-content {
       opacity: 0;
       transform: translateY(10px);
       transition: opacity .35s ease, transform .35s ease;
       display: none;
     }
+
     .page-content.active {
       opacity: 1;
-      transform: translateY(0px);
+      transform: translateY(0);
     }
 
-    /* ---------- Scrollbar ---------- */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-    /* ---------- Apple-style Navbar ---------- */
     nav {
-      background: rgba(255, 255, 255, 0.82);
+      background: rgba(255,255,255,.82);
       backdrop-filter: blur(16px);
       border-radius: 16px;
-      padding: 10px 14px !important;
+      padding: 10px 14px;
       border: 1px solid #e2e8f0;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      box-shadow: 0 8px 24px rgba(0,0,0,.04);
       position: sticky;
       top: 10px;
       z-index: 20;
     }
+
     .nav-link {
       border-radius: 14px;
-      padding: 9px 14px !important;
-      font-weight: 600 !important;
-      background: #eef2f5 !important;
-      color: #475569 !important;
-      transition: all .2s ease;
+      padding: 9px 14px;
+      font-weight: 600;
+      background: #eef2f5;
+      color: #475569;
+      transition: .2s;
     }
-    .nav-link:hover { background: #e2e8f0 !important; }
 
-    /* ---------- Buttons ---------- */
+    .nav-link:hover {
+      background: #e2e8f0;
+    }
+
     button {
-      border-radius: 12px !important;
+      border-radius: 12px;
       font-weight: 600;
       transition: transform .18s ease, opacity .18s ease;
     }
-    button:hover { transform: scale(1.04); opacity: .95; }
 
-    /* ---------- Cards & Sections ---------- */
+    button:hover {
+      transform: scale(1.04);
+      opacity: .95;
+    }
+
     #user-management-page,
     #main-app-content,
     #final-entries-list > div,
     #drafts-list > div,
     form {
-      background: #ffffff;
+      background: #fff;
       border-radius: 22px;
       border: 1px solid #e5e7eb;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
     }
+
     #final-entries-list > div:hover,
     #drafts-list > div:hover {
       transform: translateY(-3px);
-      box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+      box-shadow: 0 10px 28px rgba(0,0,0,.08);
     }
 
-    /* ---------- Textarea ---------- */
     textarea {
       background: #fffceb;
       border: 1px solid #f1e7b6 !important;
       border-radius: 14px;
       padding: 14px;
       line-height: 1.6;
-      transition: all 0.2s ease;
+      transition: .2s ease;
       resize: none;
     }
+
     textarea:focus {
       background: #fff9d7;
       border-color: #f4d96b !important;
-      box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.25);
+      box-shadow: 0 0 0 3px rgba(250,204,21,.25);
     }
 
-    /* ---------- Toast Notification ---------- */
     #apple-toast {
       position: fixed;
       top: 22px;
       left: 50%;
       transform: translateX(-50%) translateY(-20px);
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,.85);
       border: 1px solid #e5e7eb;
       box-shadow: 0 6px 20px rgba(0,0,0,.12);
       backdrop-filter: blur(14px);
@@ -111,254 +115,274 @@
       font-weight: 600;
       opacity: 0;
       pointer-events: none;
-      transition: all .35s ease;
+      transition: .35s ease;
       z-index: 1000;
     }
+
     #apple-toast.show {
       opacity: 1;
-      transform: translateX(-50%) translateY(0px);
+      transform: translateX(-50%) translateY(0);
     }
   </style>
 </head>
+
 <body class="min-h-screen flex flex-col items-center p-4 sm:p-8">
 
-  <!-- ---------- Toast ---------- -->
-  <div id="apple-toast"></div>
+<div id="apple-toast"></div>
 
-  <!-- USER MANAGEMENT PAGE -->
-  <div id="user-management-page" class="w-full max-w-md bg-white shadow-xl rounded-xl p-8 sm:p-10 border border-gray-100 mt-10">
-    <h2 class="text-2xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
-    <p class="text-gray-600 mb-8 text-center">Choose a user profile to access your private diary.</p>
+<div id="user-management-page" class="w-full max-w-md p-8 sm:p-10 border border-gray-100 mt-10 rounded-xl shadow-xl bg-white">
+  <h2 class="text-2xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
+  <p class="text-gray-600 mb-8 text-center">Choose a user profile to access your private diary.</p>
 
-    <div id="auth-error-message" class="hidden px-4 py-3 rounded relative mb-4 bg-red-100 border-red-400 text-red-700" role="alert">
-      <span id="auth-error-text" class="block sm:inline"></span>
+  <form id="new-user-form" class="space-y-4 mb-8 p-4 border border-green-200 rounded-lg bg-green-50">
+    <h3 class="font-semibold text-lg text-green-700">Create New User</h3>
+    <input type="text" id="new-username" required placeholder="Enter Username (e.g., Omkar_K)" class="mt-1 block w-full px-3 py-2 border border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+    <button type="submit" class="w-full py-2 px-4 rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700">
+      Create & Sign In
+    </button>
+  </form>
+
+  <div class="space-y-3">
+    <h3 class="font-semibold text-lg text-gray-700 border-b pb-2">Existing Users</h3>
+    <div id="user-list" class="max-h-48 overflow-y-auto space-y-2">
+      <div class="text-center text-gray-400">Loading users...</div>
     </div>
+  </div>
+</div>
 
-    <form id="new-user-form" class="space-y-4 mb-8 p-4 border border-green-200 rounded-lg bg-green-50">
-      <h3 class="font-semibold text-lg text-green-700">Create New User</h3>
-      <input type="text" id="new-username" required placeholder="Enter Username (e.g., Omkar_K)"
-             class="mt-1 block w-full px-3 py-2 border border-green-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
-      <button type="submit" id="create-user-button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700 transition duration-150">
-        Create & Sign In
-      </button>
+<div id="main-app-content" class="w-full max-w-4xl p-6 sm:p-10 border border-gray-100 rounded-xl shadow-2xl bg-white" style="display:none;">
+  <header class="mb-6 pb-4 border-b border-gray-200">
+    <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-blue-500" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
+      Personal Journal
+    </h1>
+    <p class="text-gray-600 text-lg">Organized access to your entries and drafts.</p>
+  </header>
+
+  <nav class="mb-8 flex space-x-2 sm:space-x-4 items-center">
+    <a href="#home" class="nav-link bg-blue-100 text-blue-700">Home (Entries)</a>
+    <a href="#write" class="nav-link bg-yellow-100 text-yellow-700">Write New Entry</a>
+    <a href="#drafts" class="nav-link bg-gray-100 text-gray-700">Drafts (<span id="drafts-count">0</span>)</a>
+    <button id="logout-button" class="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg">Switch User</button>
+  </nav>
+
+  <div id="user-info" class="text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center mb-6">
+    <span class="font-semibold text-blue-700 mr-2">Signed in as:</span>
+    <span id="user-id-display" class="font-bold">Guest</span>
+  </div>
+
+  <section id="home-page" class="page-content">
+    <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Finalized Entries</h2>
+    <div id="final-entries-list" class="space-y-6"></div>
+    <div id="home-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
+      <p class="text-lg font-medium">No final entries found. Start writing your first thought!</p>
+      <a href="#write" class="mt-3 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg">Write Now</a>
+    </div>
+  </section>
+
+  <section id="write-page" class="page-content">
+    <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Write New Entry</h2>
+    <form id="new-entry-form" class="p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
+      <textarea id="new-entry-text" rows="8" class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"></textarea>
+      <div class="mt-4 flex space-x-4">
+        <button type="submit" data-action="final" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg">Save as Final Entry</button>
+        <button type="submit" data-action="draft" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg">Save as Draft</button>
+      </div>
     </form>
+  </section>
 
-    <div class="space-y-3">
-      <h3 class="font-semibold text-lg text-gray-700 border-b pb-2">Existing Users</h3>
-      <div id="user-list" class="max-h-48 overflow-y-auto space-y-2">
-        <div id="user-list-loading" class="text-center text-gray-400">Loading users...</div>
-      </div>
+  <section id="drafts-page" class="page-content">
+    <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Drafts (<span id="drafts-header-count">0</span>)</h2>
+    <div id="drafts-list" class="space-y-6"></div>
+    <div id="drafts-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
+      <p class="text-lg font-medium">No drafts saved. Start writing some new ideas!</p>
+      <a href="#write" class="mt-3 inline-block px-4 py-2 bg-yellow-600 text-white rounded-lg">Write Draft</a>
     </div>
-  </div>
+  </section>
+</div>
 
-  <!-- MAIN APP -->
-  <div id="main-app-content" class="w-full max-w-4xl bg-white shadow-2xl rounded-xl p-6 sm:p-10 border border-gray-100">
-    <header class="mb-6 pb-4 border-b border-gray-200">
-      <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" class="w-8 h-8 mr-3 text-blue-500"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
-        Personal Journal
-      </h1>
-      <p class="text-gray-600 text-lg">Organized access to your entries and drafts.</p>
-    </header>
+<script>
+  const USERS_KEY='pj_users_v2';
+  const ENTRIES_KEY='pj_entries_v2';
+  const SELECTED_KEY='pj_selected_user_v2';
 
-    <nav class="mb-8 flex space-x-2 sm:space-x-4 items-center">
-      <a href="#home" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-blue-100 text-blue-700 hover:bg-blue-200">Home (Entries)</a>
-      <a href="#write" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-yellow-100 text-yellow-700 hover:bg-yellow-200">Write New Entry</a>
-      <a href="#drafts" class="nav-link px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-gray-100 text-gray-700 hover:bg-gray-200">Drafts (<span id="drafts-count">0</span>)</a>
-      <button id="logout-button" class="ml-auto px-4 py-2 text-sm font-semibold rounded-lg transition duration-150 bg-red-100 text-red-700 hover:bg-red-200">Switch User</button>
-    </nav>
+  let users=JSON.parse(localStorage.getItem(USERS_KEY))||{};
+  let entries=JSON.parse(localStorage.getItem(ENTRIES_KEY))||[];
+  let currentUser=localStorage.getItem(SELECTED_KEY)||null;
 
-    <div id="user-info" class="mt-4 text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center break-words mb-6">
-      <span class="font-semibold text-blue-700 mr-2">Signed in as:</span>
-      <span id="user-id-display" class="font-bold">Guest</span>
-    </div>
+  const now=()=>new Date().toISOString();
 
-    <!-- HOME PAGE -->
-    <section id="home-page" class="page-content">
-      <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Finalized Entries</h2>
-      <div id="final-entries-list" class="space-y-6"></div>
-      <div id="home-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
-        <p class="text-lg font-medium">No final entries found. Start writing your first thought!</p>
-        <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">Write Now</a>
-      </div>
-    </section>
+  function toast(msg){
+    const t=document.getElementById("apple-toast");
+    t.innerText=msg;
+    t.classList.add("show");
+    setTimeout(()=>t.classList.remove("show"),2300);
+  }
 
-    <!-- WRITE PAGE -->
-    <section id="write-page" class="page-content">
-      <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Write New Entry</h2>
-      <form id="new-entry-form" class="p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
-        <textarea id="new-entry-text" rows="8" class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition duration-150 resize-none text-gray-800" placeholder="Write your diary entry here."></textarea>
-        <div class="mt-4 flex space-x-4">
-          <button type="submit" data-action="final" id="save-final-button" class="flex-1 px-6 py-3 text-lg font-bold text-white rounded-lg shadow-md transition duration-200 bg-blue-600 hover:bg-blue-700">Save as Final Entry</button>
-          <button type="submit" data-action="draft" id="save-draft-button" class="flex-1 px-6 py-3 text-lg font-bold rounded-lg shadow-md transition duration-200 bg-gray-600 text-white hover:bg-gray-700">Save as Draft</button>
-        </div>
-      </form>
-    </section>
+  function renderUsers(){
+    const list=document.getElementById('user-list');
+    list.innerHTML='';
+    const names=Object.keys(users);
+    if(!names.length){ list.innerHTML='<div class="text-center text-gray-500 p-2">No users found.</div>'; return;}
 
-    <!-- DRAFTS PAGE -->
-    <section id="drafts-page" class="page-content">
-      <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Drafts (<span id="drafts-header-count">0</span>)</h2>
-      <div id="drafts-list" class="space-y-6"></div>
-      <div id="drafts-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
-        <p class="text-lg font-medium">No drafts saved. Start writing some new ideas!</p>
-        <a href="#write" class="inline-block mt-3 px-4 py-2 text-sm font-semibold rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition">Write Draft</a>
-      </div>
-    </section>
-  </div>
+    names.forEach(u=>{
+      const row=document.createElement('div');
+      row.className='flex justify-between items-center';
 
-  <script>
-    // ---------- Storage & state ----------
-    const USERS_KEY = 'pj_users_v2';
-    const ENTRIES_KEY = 'pj_entries_v2';
-    const SELECTED_USER_KEY = 'pj_selected_user_v2';
-    let users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
-    let entries = JSON.parse(localStorage.getItem(ENTRIES_KEY)) || [];
-    let currentUser = localStorage.getItem(SELECTED_USER_KEY) || null;
+      const btn=document.createElement('button');
+      btn.innerText=u;
+      btn.className='flex-1 text-left py-2 px-3 bg-gray-100 rounded hover:bg-gray-200';
+      btn.onclick=()=>{currentUser=u;localStorage.setItem(SELECTED_KEY,u);showApp();};
 
-    // ---------- Helpers ----------
-    const uid = () => Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
-    const nowISO = () => new Date().toISOString();
+      const del=document.createElement('button');
+      del.innerText='Delete';
+      del.className='ml-2 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700';
+      del.onclick=()=>{
+        if(confirm(`Delete "${u}" and all their entries?`)){
+          delete users[u];
+          entries=entries.filter(e=>e.user!==u);
+          if(currentUser===u) currentUser=null;
+          localStorage.setItem(USERS_KEY,JSON.stringify(users));
+          localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));
+          localStorage.setItem(SELECTED_KEY,currentUser||'');
+          renderUsers();
+          showApp();
+        }
+      };
 
-    function appleToast(msg) {
-      const t = document.getElementById("apple-toast");
-      t.innerText = msg;
-      t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 2300);
+      row.appendChild(btn);
+      row.appendChild(del);
+      list.appendChild(row);
+    });
+  }
+
+  document.getElementById('new-user-form').onsubmit=e=>{
+    e.preventDefault();
+    const val=document.getElementById('new-username').value.trim();
+    if(!val){toast('Username cannot be empty');return;}
+    if(users[val]){toast('Username exists');return;}
+    users[val]={created:now()};
+    localStorage.setItem(USERS_KEY,JSON.stringify(users));
+    document.getElementById('new-username').value='';
+    currentUser=val;
+    localStorage.setItem(SELECTED_KEY,val);
+    renderUsers();
+    showApp();
+  };
+
+  function showApp(){
+    if(!currentUser){
+      document.getElementById('user-management-page').style.display='block';
+      document.getElementById('main-app-content').style.display='none';
+      return;
     }
+    document.getElementById('user-management-page').style.display='none';
+    document.getElementById('main-app-content').style.display='block';
+    document.getElementById('user-id-display').innerText=currentUser;
+    renderEntries();
+  }
 
-    // ---------- User management ----------
-    const renderUserList = () => {
-      const listDiv = document.getElementById('user-list');
-      listDiv.innerHTML = '';
-      const names = Object.keys(users);
-      if (!names.length) { listDiv.innerHTML = '<div class="text-center text-gray-500 p-2">No users found. Create one above!</div>'; return; }
-      names.forEach(u => {
-        const container = document.createElement('div');
-        container.className = 'flex justify-between items-center';
-        const btn = document.createElement('button');
-        btn.innerText = u;
-        btn.className = 'flex-1 text-left py-2 px-3 bg-gray-100 rounded hover:bg-gray-200';
-        btn.onclick = () => { currentUser = u; localStorage.setItem(SELECTED_USER_KEY, currentUser); showApp(); };
-        const delBtn = document.createElement('button');
-        delBtn.innerText = 'Delete';
-        delBtn.className = 'ml-2 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700';
-        delBtn.onclick = () => {
-          if(confirm(`Are you sure you want to delete "${u}" and all their entries?`)){
-            delete users[u];
-            entries = entries.filter(e => e.user !== u);
-            if(currentUser===u) currentUser=null;
-            localStorage.setItem(USERS_KEY, JSON.stringify(users));
-            localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
-            localStorage.setItem(SELECTED_USER_KEY, currentUser || '');
-            renderUserList();
-            showApp();
-          }
-        };
-        container.appendChild(btn); container.appendChild(delBtn);
-        listDiv.appendChild(container);
-      });
-    };
+  function renderEntries(){
+    const finalList=document.getElementById('final-entries-list');
+    const draftList=document.getElementById('drafts-list');
+    const finalEntries=entries.filter(e=>e.user===currentUser&&!e.draft);
+    const drafts=entries.filter(e=>e.user===currentUser&&e.draft);
 
-    document.getElementById('new-user-form').onsubmit = e => {
-      e.preventDefault();
-      const val = document.getElementById('new-username').value.trim();
-      if(!val){ appleToast('Username cannot be empty'); return; }
-      if(users[val]){ appleToast('Username exists'); return; }
-      users[val]={ created: nowISO() };
-      localStorage.setItem(USERS_KEY, JSON.stringify(users));
-      document.getElementById('new-username').value='';
-      currentUser=val;
-      localStorage.setItem(SELECTED_USER_KEY, currentUser);
-      renderUserList();
-      showApp();
-    };
+    finalList.innerHTML='';
+    draftList.innerHTML='';
 
-    // ---------- App ----------
-    const showApp = () => {
-      if(!currentUser){ document.getElementById('user-management-page').style.display='block'; document.getElementById('main-app-content').style.display='none'; return; }
-      document.getElementById('user-management-page').style.display='none';
-      document.getElementById('main-app-content').style.display='block';
-      document.getElementById('user-id-display').innerText=currentUser;
-      renderEntries();
-    };
+    document.getElementById('home-empty-state').classList.toggle('hidden',finalEntries.length>0);
+    document.getElementById('drafts-empty-state').classList.toggle('hidden',drafts.length>0);
 
-    const renderEntries = () => {
-      const finalList = document.getElementById('final-entries-list');
-      const draftList = document.getElementById('drafts-list');
-      const finalEntries = entries.filter(e=>e.user===currentUser && !e.draft);
-      const drafts = entries.filter(e=>e.user===currentUser && e.draft);
-      finalList.innerHTML=''; draftList.innerHTML='';
-      if(!finalEntries.length) document.getElementById('home-empty-state').classList.remove('hidden'); else document.getElementById('home-empty-state').classList.add('hidden');
-      if(!drafts.length) document.getElementById('drafts-empty-state').classList.remove('hidden'); else document.getElementById('drafts-empty-state').classList.add('hidden');
-      document.getElementById('drafts-count').innerText=drafts.length;
-      document.getElementById('drafts-header-count').innerText=drafts.length;
+    document.getElementById('drafts-count').innerText=drafts.length;
+    document.getElementById('drafts-header-count').innerText=drafts.length;
 
-      // Final entries with delete option
-      finalEntries.forEach(e=>{
-        const div = document.createElement('div');
-        div.className='bg-white p-5 border-l-4 border-blue-400 shadow-md rounded-lg mb-2 flex justify-between items-start';
-        const contentDiv = document.createElement('div');
-        contentDiv.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Final)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
-        const delBtn = document.createElement('button');
-        delBtn.innerText='Delete';
-        delBtn.className='ml-4 bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
-        delBtn.onclick=()=>{
-          if(confirm('Delete this entry?')){
-            entries=entries.filter(x=>x!==e);
-            localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
-            renderEntries();
-          }
-        };
-        div.appendChild(contentDiv); div.appendChild(delBtn); finalList.appendChild(div);
-      });
+    finalEntries.forEach(e=>{
+      const wrap=document.createElement('div');
+      wrap.className='bg-white p-5 border-l-4 border-blue-400 shadow-md rounded-lg mb-2 flex justify-between';
 
-      // Draft entries
-      drafts.forEach(e=>{
-        const div = document.createElement('div');
-        div.className='bg-white p-5 border-l-4 border-gray-400 shadow-md rounded-lg mb-2 flex justify-between items-start';
-        const contentDiv = document.createElement('div');
-        contentDiv.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Draft)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
-        const actions=document.createElement('div');
-        const finalizeBtn=document.createElement('button');
-        finalizeBtn.innerText='Finalize';
-        finalizeBtn.className='bg-blue-600 text-white px-2 py-1 rounded mb-1 hover:bg-blue-700';
-        finalizeBtn.onclick=()=>{ e.draft=false; localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); appleToast('Draft finalized'); };
-        const delBtn=document.createElement('button');
-        delBtn.innerText='Delete';
-        delBtn.className='bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
-        delBtn.onclick=()=>{ entries=entries.filter(x=>x!==e); localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries)); renderEntries(); appleToast('Draft deleted'); };
-        actions.appendChild(finalizeBtn); actions.appendChild(delBtn); div.appendChild(contentDiv); div.appendChild(actions); draftList.appendChild(div);
-      });
-    };
+      const content=document.createElement('div');
+      content.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Final)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
 
-    document.getElementById('new-entry-form').onsubmit=e=>{
-      e.preventDefault();
-      const val=document.getElementById('new-entry-text').value.trim();
-      if(!val){ appleToast('Cannot save empty entry'); return; }
-      const isDraft=e.submitter.dataset.action==='draft';
-      entries.push({ user: currentUser, text: val, draft:isDraft, time: nowISO() });
-      localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
-      document.getElementById('new-entry-text').value='';
-      appleToast(isDraft?'Draft saved successfully!':'Final entry saved successfully!');
-      showApp();
-    };
+      const del=document.createElement('button');
+      del.innerText='Delete';
+      del.className='ml-4 bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
+      del.onclick=()=>{
+        if(confirm('Delete this entry?')){
+          entries=entries.filter(x=>x!==e);
+          localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));
+          renderEntries();
+        }
+      };
 
-    document.getElementById('logout-button').onclick=()=>{
-      currentUser=null; localStorage.setItem(SELECTED_USER_KEY,''); showApp();
-    };
-
-    // ---------- Routing ----------
-    window.addEventListener('hashchange', ()=>{
-      const h=window.location.hash||'#home';
-      document.querySelectorAll('.page-content').forEach(p=>{p.classList.remove('active'); p.style.display='none';});
-      const el=document.querySelector(h+'-page');
-      if(el){ el.style.display='block'; setTimeout(()=>el.classList.add('active'), 10); }
+      wrap.appendChild(content);
+      wrap.appendChild(del);
+      finalList.appendChild(wrap);
     });
 
-    // ---------- Init ----------
-    renderUserList(); showApp();
-    if(!window.location.hash) window.location.hash='#home';
-    window.dispatchEvent(new Event('hashchange'));
-  </script>
+    drafts.forEach(e=>{
+      const wrap=document.createElement('div');
+      wrap.className='bg-white p-5 border-l-4 border-gray-400 shadow-md rounded-lg mb-2 flex justify-between';
+
+      const content=document.createElement('div');
+      content.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Draft)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
+
+      const actions=document.createElement('div');
+
+      const fin=document.createElement('button');
+      fin.innerText='Finalize';
+      fin.className='bg-blue-600 text-white px-2 py-1 rounded mb-1 hover:bg-blue-700';
+      fin.onclick=()=>{e.draft=false;localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));renderEntries();toast('Finalized');};
+
+      const del=document.createElement('button');
+      del.innerText='Delete';
+      del.className='bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
+      del.onclick=()=>{entries=entries.filter(x=>x!==e);localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));renderEntries();toast('Draft deleted');};
+
+      actions.appendChild(fin);
+      actions.appendChild(del);
+      wrap.appendChild(content);
+      wrap.appendChild(actions);
+      draftList.appendChild(wrap);
+    });
+  }
+
+  document.getElementById('new-entry-form').onsubmit=e=>{
+    e.preventDefault();
+    const val=document.getElementById('new-entry-text').value.trim();
+    if(!val){toast('Cannot save empty entry');return;}
+    const isDraft=e.submitter.dataset.action==='draft';
+    entries.push({user:currentUser,text:val,draft:isDraft,time:now()});
+    localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));
+    document.getElementById('new-entry-text').value='';
+    toast(isDraft?'Draft saved':'Final entry saved');
+    showApp();
+  };
+
+  document.getElementById('logout-button').onclick=()=>{
+    currentUser=null;
+    localStorage.setItem(SELECTED_KEY,'');
+    showApp();
+  };
+
+  window.addEventListener('hashchange',()=>{
+    const h=window.location.hash||'#home';
+    document.querySelectorAll('.page-content').forEach(p=>{
+      p.classList.remove('active');
+      p.style.display='none';
+    });
+    const el=document.querySelector(h+'-page');
+    if(el){
+      el.style.display='block';
+      setTimeout(()=>el.classList.add('active'),10);
+    }
+  });
+
+  renderUsers();
+  showApp();
+  if(!window.location.hash) window.location.hash='#home';
+  window.dispatchEvent(new Event('hashchange'));
+</script>
+
 </body>
 </html>
