@@ -52,7 +52,7 @@ Open `http://localhost:3000`.
 ## Quality and operations
 
 - CI pipeline: `.github/workflows/ci.yml`
-- API tests: `tests/api.test.js`
+- API tests: `tests/api.test.mjs`
 - Product roadmap: `docs/ROADMAP.md`
 - Changelog: `docs/CHANGELOG.md`
 - Support workflow: `docs/SUPPORT.md`
