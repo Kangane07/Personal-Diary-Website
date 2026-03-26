@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Journal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 sm:p-8 text-slate-900">
+  <main class="max-w-6xl mx-auto space-y-4">
+    <section id="auth" class="bg-white rounded-2xl border p-6 max-w-xl mx-auto shadow">
+      <h1 class="text-2xl font-bold mb-1">Personal Journal</h1>
+      <p class="text-slate-600 mb-4">Secure account-based journaling with cloud sync API.</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <form id="register-form" class="space-y-2 border rounded-xl p-3">
+          <h2 class="font-semibold">Register</h2>
+          <input id="reg-name" class="w-full border rounded p-2" placeholder="Display name" required />
+          <input id="reg-email" type="email" class="w-full border rounded p-2" placeholder="Email" required />
+          <input id="reg-pass" type="password" class="w-full border rounded p-2" placeholder="Password (8+)" required />
+          <button class="w-full bg-blue-600 text-white rounded p-2">Create account</button>
+        </form>
+        <form id="login-form" class="space-y-2 border rounded-xl p-3">
+          <h2 class="font-semibold">Login</h2>
+          <input id="login-email" type="email" class="w-full border rounded p-2" placeholder="Email" required />
+          <input id="login-pass" type="password" class="w-full border rounded p-2" placeholder="Password" required />
+          <button class="w-full bg-slate-700 text-white rounded p-2">Sign in</button>
+        </form>
+      </div>
+      <div id="auth-info" class="mt-3 text-sm text-slate-700"></div>
+      <div class="mt-3 text-xs text-slate-500">
+        Hosting frontend separately? Set backend API URL:
+        <input id="api-base" class="border rounded p-1 ml-1 w-64 max-w-full" placeholder="https://your-api.example.com" />
+        <button id="save-api-base" class="px-2 py-1 rounded bg-slate-200">Save</button>
+      </div>
+    </section>
+
+    <section id="app" class="hidden bg-white rounded-2xl border p-6 shadow space-y-4">
+      <header class="flex flex-wrap gap-2 items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold">Journal Dashboard</h2>
+          <p id="me" class="text-sm text-slate-600"></p>
+        </div>
+        <div class="flex gap-2">
+          <button id="verify-email" class="px-3 py-2 rounded bg-amber-100">Verify Email</button>
+          <button id="export" class="px-3 py-2 rounded bg-blue-100">Export JSON</button>
+          <button id="logout" class="px-3 py-2 rounded bg-red-600 text-white">Logout</button>
+        </div>
+      </header>
+
+      <div class="grid sm:grid-cols-3 gap-3">
+        <div class="border rounded-xl p-3"><p class="text-xs text-slate-500">Final</p><p id="stat-final" class="text-2xl font-bold">0</p></div>
+        <div class="border rounded-xl p-3"><p class="text-xs text-slate-500">Drafts</p><p id="stat-draft" class="text-2xl font-bold">0</p></div>
+        <div class="border rounded-xl p-3"><p class="text-xs text-slate-500">Words</p><p id="stat-words" class="text-2xl font-bold">0</p></div>
+      </div>
+
+      <form id="entry-form" class="border rounded-xl p-3 space-y-2">
+        <input id="entry-title" class="w-full border rounded p-2" placeholder="Title" />
+        <textarea id="entry-text" class="w-full border rounded p-2" rows="6" maxlength="5000" placeholder="Write here..." required></textarea>
+        <div class="flex gap-2">
+          <button type="submit" data-draft="false" class="px-4 py-2 rounded bg-blue-600 text-white">Save Final</button>
+          <button type="submit" data-draft="true" class="px-4 py-2 rounded bg-slate-700 text-white">Save Draft</button>
+          <button id="clear-all" type="button" class="px-4 py-2 rounded bg-red-100">Delete All</button>
+        </div>
+      </form>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <h3 class="font-semibold mb-2">Final entries</h3>
+          <div id="final-list" class="space-y-2"></div>
+        </div>
+        <div>
+          <h3 class="font-semibold mb-2">Draft entries</h3>
+          <div id="draft-list" class="space-y-2"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const bootApiBase = new URLSearchParams(window.location.search).get('apiBase') || '';
+    const state = {
+      token: localStorage.getItem('token') || '',
+      verificationToken: '',
+      apiBase: bootApiBase || localStorage.getItem('apiBase') || ''
+    };
+
+    const authInfo = document.getElementById('auth-info');
+
+    async function api(url, options = {}) {
+      let res;
+      try {
+        res = await fetch(`${state.apiBase}${url}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}),
+            ...(options.headers || {})
+          }
+        });
+      } catch (err) {
+        authInfo.textContent = `Network error. If frontend is hosted separately, configure API base URL above.`;
+        throw err;
+      }
+      if (res.status === 204) return null;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    function wc(text) {
+      return text.trim() ? text.trim().split(/\s+/).length : 0;
+    }
+
+    function renderEntries(entries) {
+      const finals = entries.filter((e) => !e.draft);
+      const drafts = entries.filter((e) => e.draft);
+      document.getElementById('stat-final').textContent = finals.length;
+      document.getElementById('stat-draft').textContent = drafts.length;
+      document.getElementById('stat-words').textContent = entries.reduce((sum, e) => sum + wc(e.text), 0);
+
+      const renderCard = (e) => {
+        const card = document.createElement('div');
+        card.className = 'border rounded-lg p-3 bg-slate-50';
+        const title = document.createElement('h4');
+        title.className = 'font-semibold';
+        title.textContent = e.title || '(Untitled)';
+        const txt = document.createElement('p');
+        txt.className = 'whitespace-pre-wrap text-sm mt-1';
+        txt.textContent = e.text;
+        const meta = document.createElement('p');
+        meta.className = 'text-xs text-slate-500 mt-1';
+        meta.textContent = new Date(e.updatedAt).toLocaleString();
+        const row = document.createElement('div');
+        row.className = 'flex gap-2 mt-2';
+        const del = document.createElement('button');
+        del.className = 'px-2 py-1 text-xs rounded bg-red-600 text-white';
+        del.textContent = 'Delete';
+        del.onclick = async () => {
+          await api(`/api/entries/${e.id}`, { method: 'DELETE' });
+          await refresh();
+        };
+        row.append(del);
+        if (e.draft) {
+          const finalize = document.createElement('button');
+          finalize.className = 'px-2 py-1 text-xs rounded bg-blue-600 text-white';
+          finalize.textContent = 'Finalize';
+          finalize.onclick = async () => {
+            await api(`/api/entries/${e.id}`, { method: 'PATCH', body: JSON.stringify({ draft: false }) });
+            await refresh();
+          };
+          row.append(finalize);
+        }
+        card.append(title, txt, meta, row);
+        return card;
+      };
+
+      const finalList = document.getElementById('final-list');
+      const draftList = document.getElementById('draft-list');
+      finalList.innerHTML = '';
+      draftList.innerHTML = '';
+      finals.forEach((e) => finalList.appendChild(renderCard(e)));
+      drafts.forEach((e) => draftList.appendChild(renderCard(e)));
+    }
+
+    async function refresh() {
+      if (!state.token) return;
+      const me = await api('/api/me');
+      document.getElementById('me').textContent = `${me.displayName} (${me.email}) • ${me.emailVerified ? 'Verified' : 'Unverified'}`;
+      const entries = await api('/api/entries');
+      renderEntries(entries);
+    }
+
+    function setAuthed(v) {
+      document.getElementById('auth').classList.toggle('hidden', v);
+      document.getElementById('app').classList.toggle('hidden', !v);
+    }
+
+    document.getElementById('register-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        displayName: document.getElementById('reg-name').value,
+        email: document.getElementById('reg-email').value,
+        password: document.getElementById('reg-pass').value
+      };
+      const res = await api('/api/auth/register', { method: 'POST', body: JSON.stringify(payload) });
+      state.token = res.token;
+      state.verificationToken = res.verificationToken;
+      localStorage.setItem('token', state.token);
+      document.getElementById('auth-info').textContent = `Registered. Verification token: ${res.verificationToken}`;
+      setAuthed(true);
+      await refresh();
+    };
+
+    document.getElementById('login-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        email: document.getElementById('login-email').value,
+        password: document.getElementById('login-pass').value
+      };
+      const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) });
+      state.token = res.token;
+      localStorage.setItem('token', state.token);
+      setAuthed(true);
+      await refresh();
+    };
+
+    document.getElementById('entry-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const isDraft = e.submitter.dataset.draft === 'true';
+      const payload = {
+        title: document.getElementById('entry-title').value,
+        text: document.getElementById('entry-text').value,
+        draft: isDraft
+      };
+      await api('/api/entries', { method: 'POST', body: JSON.stringify(payload) });
+      document.getElementById('entry-title').value = '';
+      document.getElementById('entry-text').value = '';
+      await refresh();
+    };
+
+    document.getElementById('clear-all').onclick = async () => {
+      if (!confirm('Delete all entries?')) return;
+      await api('/api/entries', { method: 'DELETE' });
+      await refresh();
+    };
+
+    document.getElementById('export').onclick = async () => {
+      const data = await api('/api/export');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `journal-export-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    document.getElementById('verify-email').onclick = async () => {
+      const token = prompt('Enter verification token (from register response):', state.verificationToken || '');
+      if (!token) return;
+      await api('/api/auth/verify-email', { method: 'POST', body: JSON.stringify({ token }) });
+      await refresh();
+    };
+
+    document.getElementById('logout').onclick = () => {
+      state.token = '';
+      localStorage.removeItem('token');
+      setAuthed(false);
+    };
+
+    document.getElementById('save-api-base').onclick = () => {
+      const input = document.getElementById('api-base');
+      state.apiBase = input.value.trim().replace(/\/$/, '');
+      localStorage.setItem('apiBase', state.apiBase);
+      authInfo.textContent = `Saved API base URL: ${state.apiBase || '(same origin)'}`;
+    };
+
+    (async function init() {
+      document.getElementById('api-base').value = state.apiBase;
+      if (bootApiBase) {
+        localStorage.setItem('apiBase', state.apiBase);
+        authInfo.textContent = `API base URL loaded from query param.`;
+      }
+      if (!state.token) {
+        setAuthed(false);
+        return;
+      }
+      try {
+        setAuthed(true);
+        await refresh();
+      } catch {
+        state.token = '';
+        localStorage.removeItem('token');
+        setAuthed(false);
+      }
+    })();
+  </script>
+</body>
+</html>
