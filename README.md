@@ -57,6 +57,7 @@ Open `http://localhost:3000`.
 3. **Connect frontend to backend**
    - In your Pages site, paste your Render backend URL in “Set backend API URL”, then click **Save**.
    - Optional: pass it in URL query once: `?apiBase=https://your-render-app.onrender.com`
+   - Current default backend URL in `public/index.html` is set to: `https://personal-diary-website-qqh1.onrender.com`
 
 ## Environment variables
 

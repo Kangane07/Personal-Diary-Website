@@ -77,11 +77,14 @@
   </main>
 
   <script>
+    const DEFAULT_RENDER_API = 'https://personal-diary-website-qqh1.onrender.com';
     const bootApiBase = new URLSearchParams(window.location.search).get('apiBase') || '';
+    const inferredDefaultApi =
+      window.location.hostname.includes('github.io') ? DEFAULT_RENDER_API : '';
     const state = {
       token: localStorage.getItem('token') || '',
       verificationToken: '',
-      apiBase: bootApiBase || localStorage.getItem('apiBase') || ''
+      apiBase: bootApiBase || localStorage.getItem('apiBase') || inferredDefaultApi
     };
 
     const authInfo = document.getElementById('auth-info');
@@ -260,6 +263,9 @@
       if (bootApiBase) {
         localStorage.setItem('apiBase', state.apiBase);
         authInfo.textContent = `API base URL loaded from query param.`;
+      } else if (!localStorage.getItem('apiBase') && inferredDefaultApi) {
+        localStorage.setItem('apiBase', inferredDefaultApi);
+        authInfo.textContent = `Using default Render API: ${inferredDefaultApi}`;
       }
       if (!state.token) {
         setAuthed(false);
