@@ -77,10 +77,11 @@
   </main>
 
   <script>
+    const bootApiBase = new URLSearchParams(window.location.search).get('apiBase') || '';
     const state = {
       token: localStorage.getItem('token') || '',
       verificationToken: '',
-      apiBase: localStorage.getItem('apiBase') || ''
+      apiBase: bootApiBase || localStorage.getItem('apiBase') || ''
     };
 
     const authInfo = document.getElementById('auth-info');
@@ -256,6 +257,10 @@
 
     (async function init() {
       document.getElementById('api-base').value = state.apiBase;
+      if (bootApiBase) {
+        localStorage.setItem('apiBase', state.apiBase);
+        authInfo.textContent = `API base URL loaded from query param.`;
+      }
       if (!state.token) {
         setAuthed(false);
         return;

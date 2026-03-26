@@ -43,6 +43,21 @@ Open `http://localhost:3000`.
   - on the same origin, or
   - separately and configure API base URL from login screen.
 
+### Render + GitHub Pages (recommended for your setup)
+
+1. **Deploy API on Render**
+   - Connect this repo on Render as a Web Service (or use `render.yaml`).
+   - Ensure env vars are set (`JWT_SECRET`, `DB_PATH`, `CLIENT_ORIGIN`).
+   - Set `CLIENT_ORIGIN` to your Pages URL (e.g., `https://<username>.github.io`).
+
+2. **Deploy frontend on GitHub Pages**
+   - Use the included workflow `.github/workflows/deploy-pages.yml`.
+   - It publishes the `public/` folder to Pages on pushes to `main`.
+
+3. **Connect frontend to backend**
+   - In your Pages site, paste your Render backend URL in “Set backend API URL”, then click **Save**.
+   - Optional: pass it in URL query once: `?apiBase=https://your-render-app.onrender.com`
+
 ## Environment variables
 
 - `PORT` (optional, default `3000`)
