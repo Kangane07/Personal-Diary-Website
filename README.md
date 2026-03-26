@@ -1,56 +1,57 @@
-# 📝 Personal Journal — Multi-User Web App
+# Personal Journal (Full-Stack)
 
-A polished, browser-based diary for multiple local users. Create profiles, write entries, save drafts, search your writing, and export your data — all with no backend required.
+A production-oriented personal diary web app with:
+- account authentication
+- JWT sessions
+- backend API + SQLite storage
+- cloud-ready architecture
+- legal pages and operational docs
+- automated API tests + CI
 
----
+## Features
 
-## 🚀 Features
+- Register/login with email + password
+- Email verification token flow
+- Password reset token flow
+- Journal CRUD (draft/final)
+- JSON export
+- Rate limiting and secure headers
+- Data schema versioning table
 
-- Multi-user local profiles (switch users instantly).
-- Save entries as **Final** or **Draft**.
-- Search across final entries and drafts.
-- Entry metadata with title, timestamp, and word count.
-- Dashboard stats: finalized entries, drafts, and total words.
-- Theme toggle (light/dark mode).
-- JSON export for current user data.
-- Local-first storage with basic migration support from v2 keys.
+## Tech Stack
 
----
+- Frontend: HTML + Tailwind + Vanilla JS (`public/index.html`)
+- Backend: Node.js + Express (`server.js`)
+- Database: SQLite (`better-sqlite3`)
+- Validation: Zod
+- Auth: JWT + bcrypt
+- Testing: Vitest + Supertest
 
-## 💻 Live Demo
+## Quick start
 
-Try it here: [Personal Journal on GitHub Pages](https://kangane07.github.io/Personal-Diary-Website/)
+```bash
+npm install
+npm start
+```
 
----
+Open `http://localhost:3000`.
 
-## ⚡ Quick Start
+## Environment variables
 
-1. Clone/download this repository.
-2. Open `index.html` in any modern browser.
-3. Create a user profile.
-4. Write entries, save drafts, and organize your journal.
+- `PORT` (optional, default `3000`)
+- `JWT_SECRET` (strong secret in production)
+- `DB_PATH` (optional, default `data/diary.db`)
 
----
+## Quality and operations
 
-## 🔒 Privacy Notes
+- CI pipeline: `.github/workflows/ci.yml`
+- API tests: `tests/api.test.js`
+- Product roadmap: `docs/ROADMAP.md`
+- Changelog: `docs/CHANGELOG.md`
+- Support workflow: `docs/SUPPORT.md`
+- SLA policy: `docs/SLA.md`
 
-- This app stores data in **LocalStorage** on the current browser/profile only.
-- Anyone with access to your browser profile/device can access the diary data.
-- Use export to keep backups.
+## Legal
 
----
-
-## 🛠 Built With
-
-- HTML5
-- TailwindCSS (CDN)
-- Vanilla JavaScript
-- LocalStorage
-
----
-
-## ✨ Author
-
-**Omkar Kangane**
-- Instagram: [@om_kangane07](https://www.instagram.com/om_kangane07)
-- Email: omkangane07@gmail.com
+- Privacy policy: `/privacy.html`
+- Terms of service: `/terms.html`
