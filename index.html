@@ -1,388 +1,579 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Personal Journal - Multi-User</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Journal — Multi-User Diary</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --muted: #64748b;
+      --text: #0f172a;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --success: #16a34a;
+      --danger: #dc2626;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #0b1120;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --border: #1f2937;
+      --accent: #60a5fa;
+      --accent-soft: #1e3a8a;
+      --success: #22c55e;
+      --danger: #f87171;
+    }
+
     body {
-      font-family: 'Inter', sans-serif;
-      background: #f5f7fa;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       min-height: 100vh;
-      color: #1e293b;
-      transition: background .3s ease;
+      background: radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 40%), var(--bg);
+      color: var(--text);
+      transition: background 0.25s ease;
+    }
+
+    .surface {
+      background: color-mix(in srgb, var(--card) 88%, transparent);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
     }
 
     .page-content {
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity .35s ease, transform .35s ease;
       display: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .25s ease, transform .25s ease;
     }
 
     .page-content.active {
+      display: block;
       opacity: 1;
       transform: translateY(0);
     }
 
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    nav {
-      background: rgba(255,255,255,.82);
-      backdrop-filter: blur(16px);
-      border-radius: 16px;
-      padding: 10px 14px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 8px 24px rgba(0,0,0,.04);
-      position: sticky;
-      top: 10px;
-      z-index: 20;
-    }
-
     .nav-link {
-      border-radius: 14px;
-      padding: 9px 14px;
+      border-radius: 12px;
+      padding: 9px 12px;
+      color: var(--muted);
+      transition: 0.2s ease;
       font-weight: 600;
-      background: #eef2f5;
-      color: #475569;
-      transition: .2s;
+      white-space: nowrap;
     }
 
-    .nav-link:hover {
-      background: #e2e8f0;
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--accent);
+      background: var(--accent-soft);
     }
 
-    button {
+    .btn {
       border-radius: 12px;
       font-weight: 600;
-      transition: transform .18s ease, opacity .18s ease;
+      transition: transform 0.15s ease, opacity 0.15s ease;
     }
 
-    button:hover {
-      transform: scale(1.04);
-      opacity: .95;
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: .96;
     }
 
-    #user-management-page,
-    #main-app-content,
-    #final-entries-list > div,
-    #drafts-list > div,
-    form {
-      background: #fff;
-      border-radius: 22px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 6px 18px rgba(0,0,0,.06);
-    }
-
-    #final-entries-list > div:hover,
-    #drafts-list > div:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 28px rgba(0,0,0,.08);
-    }
-
-    textarea {
-      background: #fffceb;
-      border: 1px solid #f1e7b6 !important;
-      border-radius: 14px;
-      padding: 14px;
-      line-height: 1.6;
-      transition: .2s ease;
-      resize: none;
-    }
-
-    textarea:focus {
-      background: #fff9d7;
-      border-color: #f4d96b !important;
-      box-shadow: 0 0 0 3px rgba(250,204,21,.25);
-    }
-
-    #apple-toast {
+    #toast {
       position: fixed;
-      top: 22px;
+      top: 18px;
       left: 50%;
       transform: translateX(-50%) translateY(-20px);
-      background: rgba(255,255,255,.85);
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 6px 20px rgba(0,0,0,.12);
-      backdrop-filter: blur(14px);
-      padding: 12px 20px;
-      border-radius: 16px;
-      font-weight: 600;
+      background: color-mix(in srgb, var(--card) 90%, transparent);
+      border: 1px solid var(--border);
+      color: var(--text);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, .12);
+      padding: 12px 16px;
+      border-radius: 14px;
       opacity: 0;
       pointer-events: none;
-      transition: .35s ease;
-      z-index: 1000;
+      transition: .25s ease;
+      z-index: 2000;
+      max-width: min(92vw, 560px);
     }
 
-    #apple-toast.show {
+    #toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+
+    .entry-card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 16px;
+    }
   </style>
 </head>
+<body class="p-4 sm:p-8" data-theme="light">
+  <div id="toast" role="status" aria-live="polite"></div>
 
-<body class="min-h-screen flex flex-col items-center p-4 sm:p-8">
+  <main class="max-w-6xl mx-auto space-y-6">
+    <section id="user-management-page" class="surface p-6 sm:p-8 max-w-lg mx-auto mt-8">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-2">Personal Journal</h1>
+      <p class="mb-6" style="color: var(--muted)">Create a profile to keep entries organized per user on this device.</p>
 
-<div id="apple-toast"></div>
+      <form id="new-user-form" class="space-y-3 p-4 rounded-2xl border" style="border-color: var(--border)">
+        <h2 class="font-semibold">Create New User</h2>
+        <input id="new-username" type="text" required maxlength="40" placeholder="Enter a username" class="w-full px-3 py-2 rounded-lg border bg-transparent" style="border-color: var(--border)" />
+        <button type="submit" class="btn w-full px-4 py-2 text-white" style="background: var(--success)">Create & Sign In</button>
+      </form>
 
-<div id="user-management-page" class="w-full max-w-md p-8 sm:p-10 border border-gray-100 mt-10 rounded-xl shadow-xl bg-white">
-  <h2 class="text-2xl font-extrabold text-blue-800 mb-6 text-center">Select or Create User</h2>
-  <p class="text-gray-600 mb-8 text-center">Choose a user profile to access your private diary.</p>
-
-  <form id="new-user-form" class="space-y-4 mb-8 p-4 border border-green-200 rounded-lg bg-green-50">
-    <h3 class="font-semibold text-lg text-green-700">Create New User</h3>
-    <input type="text" id="new-username" required placeholder="Enter Username (e.g., Omkar_K)" class="mt-1 block w-full px-3 py-2 border border-green-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
-    <button type="submit" class="w-full py-2 px-4 rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700">
-      Create & Sign In
-    </button>
-  </form>
-
-  <div class="space-y-3">
-    <h3 class="font-semibold text-lg text-gray-700 border-b pb-2">Existing Users</h3>
-    <div id="user-list" class="max-h-48 overflow-y-auto space-y-2">
-      <div class="text-center text-gray-400">Loading users...</div>
-    </div>
-  </div>
-</div>
-
-<div id="main-app-content" class="w-full max-w-4xl p-6 sm:p-10 border border-gray-100 rounded-xl shadow-2xl bg-white" style="display:none;">
-  <header class="mb-6 pb-4 border-b border-gray-200">
-    <h1 class="text-4xl font-extrabold text-blue-800 flex items-center mb-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mr-3 text-blue-500" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M12 2h8"/><path d="M12 12h8"/><path d="M12 22h8"/></svg>
-      Personal Journal
-    </h1>
-    <p class="text-gray-600 text-lg">Organized access to your entries and drafts.</p>
-  </header>
-
-  <nav class="mb-8 flex space-x-2 sm:space-x-4 items-center">
-    <a href="#home" class="nav-link bg-blue-100 text-blue-700">Home (Entries)</a>
-    <a href="#write" class="nav-link bg-yellow-100 text-yellow-700">Write New Entry</a>
-    <a href="#drafts" class="nav-link bg-gray-100 text-gray-700">Drafts (<span id="drafts-count">0</span>)</a>
-    <button id="logout-button" class="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg">Switch User</button>
-  </nav>
-
-  <div id="user-info" class="text-sm text-gray-500 p-2 bg-blue-50 rounded-lg flex items-center mb-6">
-    <span class="font-semibold text-blue-700 mr-2">Signed in as:</span>
-    <span id="user-id-display" class="font-bold">Guest</span>
-  </div>
-
-  <section id="home-page" class="page-content">
-    <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Finalized Entries</h2>
-    <div id="final-entries-list" class="space-y-6"></div>
-    <div id="home-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
-      <p class="text-lg font-medium">No final entries found. Start writing your first thought!</p>
-      <a href="#write" class="mt-3 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg">Write Now</a>
-    </div>
-  </section>
-
-  <section id="write-page" class="page-content">
-    <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Write New Entry</h2>
-    <form id="new-entry-form" class="p-6 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
-      <textarea id="new-entry-text" rows="8" class="w-full p-4 border-2 border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500"></textarea>
-      <div class="mt-4 flex space-x-4">
-        <button type="submit" data-action="final" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg">Save as Final Entry</button>
-        <button type="submit" data-action="draft" class="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg">Save as Draft</button>
+      <div class="mt-6">
+        <h3 class="font-semibold mb-2">Existing Users</h3>
+        <div id="user-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
       </div>
-    </form>
-  </section>
+    </section>
 
-  <section id="drafts-page" class="page-content">
-    <h2 class="text-3xl font-bold text-gray-700 mb-6 border-b pb-2">Drafts (<span id="drafts-header-count">0</span>)</h2>
-    <div id="drafts-list" class="space-y-6"></div>
-    <div id="drafts-empty-state" class="hidden text-center p-10 bg-gray-100 rounded-lg text-gray-500 mt-6">
-      <p class="text-lg font-medium">No drafts saved. Start writing some new ideas!</p>
-      <a href="#write" class="mt-3 inline-block px-4 py-2 bg-yellow-600 text-white rounded-lg">Write Draft</a>
-    </div>
-  </section>
-</div>
+    <section id="main-app-content" class="surface p-4 sm:p-6" style="display:none;">
+      <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold">Welcome back, <span id="user-id-display">Guest</span> 👋</h2>
+          <p class="text-sm mt-1" style="color: var(--muted)">Draft ideas quickly, then promote them into finalized journal entries.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="theme-toggle" class="btn px-3 py-2 border text-sm" style="border-color: var(--border)">🌙 Dark mode</button>
+          <button id="export-button" class="btn px-3 py-2 border text-sm" style="border-color: var(--border)">⬇️ Export JSON</button>
+          <button id="logout-button" class="btn px-3 py-2 text-white text-sm" style="background: var(--danger)">Switch User</button>
+        </div>
+      </header>
 
-<script>
-  const USERS_KEY='pj_users_v2';
-  const ENTRIES_KEY='pj_entries_v2';
-  const SELECTED_KEY='pj_selected_user_v2';
+      <div class="grid sm:grid-cols-3 gap-3 mb-5">
+        <div class="surface p-3">
+          <p class="text-xs uppercase tracking-wide" style="color: var(--muted)">Final Entries</p>
+          <p id="stat-final" class="text-2xl font-bold">0</p>
+        </div>
+        <div class="surface p-3">
+          <p class="text-xs uppercase tracking-wide" style="color: var(--muted)">Draft Entries</p>
+          <p id="stat-draft" class="text-2xl font-bold">0</p>
+        </div>
+        <div class="surface p-3">
+          <p class="text-xs uppercase tracking-wide" style="color: var(--muted)">Total Words</p>
+          <p id="stat-words" class="text-2xl font-bold">0</p>
+        </div>
+      </div>
 
-  let users=JSON.parse(localStorage.getItem(USERS_KEY))||{};
-  let entries=JSON.parse(localStorage.getItem(ENTRIES_KEY))||[];
-  let currentUser=localStorage.getItem(SELECTED_KEY)||null;
+      <nav class="surface p-2 flex gap-1 overflow-x-auto mb-5">
+        <a href="#home" class="nav-link" data-hash="#home">Home</a>
+        <a href="#write" class="nav-link" data-hash="#write">Write</a>
+        <a href="#drafts" class="nav-link" data-hash="#drafts">Drafts (<span id="drafts-count">0</span>)</a>
+        <a href="#settings" class="nav-link" data-hash="#settings">Settings</a>
+      </nav>
 
-  const now=()=>new Date().toISOString();
+      <section id="home-page" class="page-content space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <h3 class="text-xl font-semibold">Finalized Entries</h3>
+          <input id="search-home" type="search" placeholder="Search finalized entries..." class="px-3 py-2 rounded-lg border w-full sm:w-72 bg-transparent" style="border-color: var(--border)" />
+        </div>
+        <div id="final-entries-list" class="space-y-3"></div>
+        <div id="home-empty-state" class="text-center py-10" style="color: var(--muted)">No finalized entries yet.</div>
+      </section>
 
-  function toast(msg){
-    const t=document.getElementById("apple-toast");
-    t.innerText=msg;
-    t.classList.add("show");
-    setTimeout(()=>t.classList.remove("show"),2300);
-  }
+      <section id="write-page" class="page-content space-y-3">
+        <h3 class="text-xl font-semibold">Write New Entry</h3>
+        <form id="new-entry-form" class="surface p-4 space-y-3">
+          <input id="new-entry-title" type="text" maxlength="80" placeholder="Title (optional)" class="w-full px-3 py-2 rounded-lg border bg-transparent" style="border-color: var(--border)" />
+          <textarea id="new-entry-text" rows="8" maxlength="5000" placeholder="Write your thoughts here..." class="w-full px-3 py-2 rounded-lg border bg-transparent" style="border-color: var(--border)"></textarea>
+          <div class="flex justify-between items-center text-sm" style="color: var(--muted)">
+            <p><span id="char-count">0</span> / 5000 characters</p>
+            <p><span id="word-count">0</span> words</p>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <button type="submit" data-action="final" class="btn px-4 py-2 text-white" style="background: var(--accent)">Save as Final</button>
+            <button type="submit" data-action="draft" class="btn px-4 py-2 text-white" style="background: #475569">Save as Draft</button>
+          </div>
+        </form>
+      </section>
 
-  function renderUsers(){
-    const list=document.getElementById('user-list');
-    list.innerHTML='';
-    const names=Object.keys(users);
-    if(!names.length){ list.innerHTML='<div class="text-center text-gray-500 p-2">No users found.</div>'; return;}
+      <section id="drafts-page" class="page-content space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <h3 class="text-xl font-semibold">Drafts (<span id="drafts-header-count">0</span>)</h3>
+          <input id="search-draft" type="search" placeholder="Search drafts..." class="px-3 py-2 rounded-lg border w-full sm:w-72 bg-transparent" style="border-color: var(--border)" />
+        </div>
+        <div id="drafts-list" class="space-y-3"></div>
+        <div id="drafts-empty-state" class="text-center py-10" style="color: var(--muted)">No drafts saved.</div>
+      </section>
 
-    names.forEach(u=>{
-      const row=document.createElement('div');
-      row.className='flex justify-between items-center';
+      <section id="settings-page" class="page-content space-y-4">
+        <h3 class="text-xl font-semibold">Settings</h3>
+        <div class="surface p-4 space-y-3">
+          <p class="text-sm" style="color: var(--muted)">Data is stored in this browser only (LocalStorage).</p>
+          <button id="clear-user-entries" class="btn px-4 py-2 text-white" style="background: var(--danger)">Delete All Entries For Current User</button>
+        </div>
+      </section>
+    </section>
+  </main>
 
-      const btn=document.createElement('button');
-      btn.innerText=u;
-      btn.className='flex-1 text-left py-2 px-3 bg-gray-100 rounded hover:bg-gray-200';
-      btn.onclick=()=>{currentUser=u;localStorage.setItem(SELECTED_KEY,u);showApp();};
+  <script>
+    const USERS_KEY = 'pj_users_v3';
+    const ENTRIES_KEY = 'pj_entries_v3';
+    const SELECTED_KEY = 'pj_selected_user_v3';
+    const THEME_KEY = 'pj_theme_v1';
 
-      const del=document.createElement('button');
-      del.innerText='Delete';
-      del.className='ml-2 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700';
-      del.onclick=()=>{
-        if(confirm(`Delete "${u}" and all their entries?`)){
-          delete users[u];
-          entries=entries.filter(e=>e.user!==u);
-          if(currentUser===u) currentUser=null;
-          localStorage.setItem(USERS_KEY,JSON.stringify(users));
-          localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));
-          localStorage.setItem(SELECTED_KEY,currentUser||'');
+    let users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+    let entries = JSON.parse(localStorage.getItem(ENTRIES_KEY)) || [];
+    let currentUser = localStorage.getItem(SELECTED_KEY) || null;
+
+    const now = () => new Date().toISOString();
+    const byCurrentUser = (e) => e.user === currentUser;
+
+    function wordCount(value) {
+      return value.trim() ? value.trim().split(/\s+/).length : 0;
+    }
+
+    function toast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function saveUsers() {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+
+    function saveEntries() {
+      localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+    }
+
+    function saveCurrentUser() {
+      localStorage.setItem(SELECTED_KEY, currentUser || '');
+    }
+
+    function applyTheme(theme) {
+      const body = document.body;
+      body.dataset.theme = theme;
+      localStorage.setItem(THEME_KEY, theme);
+      document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
+    }
+
+    function createEntryCard(entry, isDraft) {
+      const card = document.createElement('article');
+      card.className = 'entry-card p-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between';
+
+      const content = document.createElement('div');
+      content.className = 'space-y-1';
+
+      const date = document.createElement('p');
+      date.className = 'text-xs';
+      date.style.color = 'var(--muted)';
+      date.textContent = new Date(entry.time).toLocaleString();
+
+      const title = document.createElement('h4');
+      title.className = 'font-semibold text-lg';
+      title.textContent = entry.title || '(Untitled Entry)';
+
+      const text = document.createElement('p');
+      text.className = 'whitespace-pre-wrap';
+      text.textContent = entry.text;
+
+      content.append(date, title, text);
+
+      const actions = document.createElement('div');
+      actions.className = 'flex sm:flex-col gap-2 shrink-0';
+
+      if (isDraft) {
+        const finalizeBtn = document.createElement('button');
+        finalizeBtn.className = 'btn px-3 py-2 rounded-lg text-white';
+        finalizeBtn.style.background = 'var(--accent)';
+        finalizeBtn.textContent = 'Finalize';
+        finalizeBtn.onclick = () => {
+          entry.draft = false;
+          saveEntries();
+          renderEntries();
+          toast('Draft finalized');
+        };
+        actions.appendChild(finalizeBtn);
+      }
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn px-3 py-2 rounded-lg text-white';
+      deleteBtn.style.background = 'var(--danger)';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.onclick = () => {
+        const ok = confirm('Delete this entry permanently?');
+        if (!ok) return;
+        entries = entries.filter((x) => x !== entry);
+        saveEntries();
+        renderEntries();
+        toast('Entry deleted');
+      };
+
+      actions.appendChild(deleteBtn);
+      card.append(content, actions);
+      return card;
+    }
+
+    function renderUsers() {
+      const list = document.getElementById('user-list');
+      list.innerHTML = '';
+      const names = Object.keys(users).sort((a, b) => a.localeCompare(b));
+
+      if (!names.length) {
+        const empty = document.createElement('p');
+        empty.className = 'text-sm';
+        empty.style.color = 'var(--muted)';
+        empty.textContent = 'No users yet. Create your first profile above.';
+        list.appendChild(empty);
+        return;
+      }
+
+      names.forEach((name) => {
+        const row = document.createElement('div');
+        row.className = 'surface p-2 flex items-center gap-2';
+
+        const login = document.createElement('button');
+        login.className = 'btn flex-1 text-left px-3 py-2 rounded-lg';
+        login.textContent = name;
+        login.onclick = () => {
+          currentUser = name;
+          saveCurrentUser();
+          showApp();
+        };
+
+        const del = document.createElement('button');
+        del.className = 'btn px-3 py-2 rounded-lg text-white';
+        del.style.background = 'var(--danger)';
+        del.textContent = 'Delete';
+        del.onclick = () => {
+          const ok = confirm(`Delete user "${name}" and all their entries?`);
+          if (!ok) return;
+          delete users[name];
+          entries = entries.filter((e) => e.user !== name);
+          if (currentUser === name) currentUser = null;
+          saveUsers();
+          saveEntries();
+          saveCurrentUser();
           renderUsers();
           showApp();
-        }
-      };
+          toast('User removed');
+        };
 
-      row.appendChild(btn);
-      row.appendChild(del);
-      list.appendChild(row);
+        row.append(login, del);
+        list.appendChild(row);
+      });
+    }
+
+    function showApp() {
+      const userPage = document.getElementById('user-management-page');
+      const appPage = document.getElementById('main-app-content');
+      if (!currentUser) {
+        userPage.style.display = 'block';
+        appPage.style.display = 'none';
+        return;
+      }
+
+      userPage.style.display = 'none';
+      appPage.style.display = 'block';
+      document.getElementById('user-id-display').textContent = currentUser;
+      renderEntries();
+      routeTo(window.location.hash || '#home');
+    }
+
+    function renderEntries() {
+      const homeSearch = document.getElementById('search-home').value.trim().toLowerCase();
+      const draftSearch = document.getElementById('search-draft').value.trim().toLowerCase();
+
+      const allUserEntries = entries.filter(byCurrentUser);
+      const finals = allUserEntries.filter((e) => !e.draft);
+      const drafts = allUserEntries.filter((e) => e.draft);
+
+      const visibleFinals = finals.filter((e) => `${e.title || ''} ${e.text}`.toLowerCase().includes(homeSearch));
+      const visibleDrafts = drafts.filter((e) => `${e.title || ''} ${e.text}`.toLowerCase().includes(draftSearch));
+
+      document.getElementById('final-entries-list').innerHTML = '';
+      document.getElementById('drafts-list').innerHTML = '';
+
+      const finalList = document.getElementById('final-entries-list');
+      const draftList = document.getElementById('drafts-list');
+
+      visibleFinals
+        .sort((a, b) => new Date(b.time) - new Date(a.time))
+        .forEach((entry) => finalList.appendChild(createEntryCard(entry, false)));
+
+      visibleDrafts
+        .sort((a, b) => new Date(b.time) - new Date(a.time))
+        .forEach((entry) => draftList.appendChild(createEntryCard(entry, true)));
+
+      document.getElementById('home-empty-state').style.display = visibleFinals.length ? 'none' : 'block';
+      document.getElementById('drafts-empty-state').style.display = visibleDrafts.length ? 'none' : 'block';
+
+      document.getElementById('drafts-count').textContent = drafts.length;
+      document.getElementById('drafts-header-count').textContent = drafts.length;
+
+      document.getElementById('stat-final').textContent = finals.length;
+      document.getElementById('stat-draft').textContent = drafts.length;
+      document.getElementById('stat-words').textContent = allUserEntries.reduce((sum, e) => sum + wordCount(e.text), 0);
+    }
+
+    function routeTo(hash) {
+      if (!currentUser) return;
+      const safeHash = ['#home', '#write', '#drafts', '#settings'].includes(hash) ? hash : '#home';
+
+      document.querySelectorAll('.page-content').forEach((page) => {
+        page.classList.remove('active');
+        page.style.display = 'none';
+      });
+
+      const page = document.querySelector(`${safeHash}-page`);
+      if (page) {
+        page.style.display = 'block';
+        requestAnimationFrame(() => page.classList.add('active'));
+      }
+
+      document.querySelectorAll('.nav-link').forEach((link) => {
+        link.classList.toggle('active', link.dataset.hash === safeHash);
+      });
+
+      if (window.location.hash !== safeHash) {
+        window.location.hash = safeHash;
+      }
+    }
+
+    document.getElementById('new-user-form').onsubmit = (event) => {
+      event.preventDefault();
+      const input = document.getElementById('new-username');
+      const username = input.value.trim();
+      if (!username) {
+        toast('Username is required');
+        return;
+      }
+      if (users[username]) {
+        toast('Username already exists');
+        return;
+      }
+      users[username] = { createdAt: now() };
+      currentUser = username;
+      saveUsers();
+      saveCurrentUser();
+      input.value = '';
+      renderUsers();
+      showApp();
+      toast(`Welcome, ${username}`);
+    };
+
+    document.getElementById('new-entry-form').onsubmit = (event) => {
+      event.preventDefault();
+      const textEl = document.getElementById('new-entry-text');
+      const titleEl = document.getElementById('new-entry-title');
+      const text = textEl.value.trim();
+      const title = titleEl.value.trim();
+      if (!text) {
+        toast('Entry text cannot be empty');
+        return;
+      }
+
+      const isDraft = event.submitter?.dataset.action === 'draft';
+      entries.push({
+        user: currentUser,
+        title,
+        text,
+        draft: isDraft,
+        time: now()
+      });
+      saveEntries();
+
+      textEl.value = '';
+      titleEl.value = '';
+      document.getElementById('char-count').textContent = '0';
+      document.getElementById('word-count').textContent = '0';
+
+      renderEntries();
+      routeTo(isDraft ? '#drafts' : '#home');
+      toast(isDraft ? 'Draft saved' : 'Final entry saved');
+    };
+
+    document.getElementById('new-entry-text').addEventListener('input', (event) => {
+      const value = event.target.value;
+      document.getElementById('char-count').textContent = String(value.length);
+      document.getElementById('word-count').textContent = String(wordCount(value));
     });
-  }
 
-  document.getElementById('new-user-form').onsubmit=e=>{
-    e.preventDefault();
-    const val=document.getElementById('new-username').value.trim();
-    if(!val){toast('Username cannot be empty');return;}
-    if(users[val]){toast('Username exists');return;}
-    users[val]={created:now()};
-    localStorage.setItem(USERS_KEY,JSON.stringify(users));
-    document.getElementById('new-username').value='';
-    currentUser=val;
-    localStorage.setItem(SELECTED_KEY,val);
+    document.getElementById('search-home').addEventListener('input', renderEntries);
+    document.getElementById('search-draft').addEventListener('input', renderEntries);
+
+    document.getElementById('logout-button').onclick = () => {
+      currentUser = null;
+      saveCurrentUser();
+      showApp();
+    };
+
+    document.getElementById('theme-toggle').onclick = () => {
+      const next = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+    };
+
+    document.getElementById('export-button').onclick = () => {
+      if (!currentUser) return;
+      const data = {
+        exportedAt: now(),
+        user: currentUser,
+        entries: entries.filter(byCurrentUser)
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `journal-${currentUser}-${Date.now()}.json`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast('Export downloaded');
+    };
+
+    document.getElementById('clear-user-entries').onclick = () => {
+      if (!currentUser) return;
+      const ok = confirm(`Delete all entries for ${currentUser}? This cannot be undone.`);
+      if (!ok) return;
+      entries = entries.filter((e) => e.user !== currentUser);
+      saveEntries();
+      renderEntries();
+      toast('All entries removed for current user');
+    };
+
+    window.addEventListener('hashchange', () => routeTo(window.location.hash || '#home'));
+
+    // Basic migration from v2 keys used by old versions
+    (function migrateV2IfNeeded() {
+      const oldUsers = localStorage.getItem('pj_users_v2');
+      const oldEntries = localStorage.getItem('pj_entries_v2');
+      const oldSelected = localStorage.getItem('pj_selected_user_v2');
+
+      if (!Object.keys(users).length && oldUsers) {
+        try {
+          users = JSON.parse(oldUsers) || {};
+          saveUsers();
+        } catch (_) {}
+      }
+
+      if (!entries.length && oldEntries) {
+        try {
+          const parsed = JSON.parse(oldEntries) || [];
+          entries = parsed.map((e) => ({ ...e, title: e.title || '' }));
+          saveEntries();
+        } catch (_) {}
+      }
+
+      if (!currentUser && oldSelected) {
+        currentUser = oldSelected;
+        saveCurrentUser();
+      }
+    })();
+
     renderUsers();
+    applyTheme(localStorage.getItem(THEME_KEY) || 'light');
     showApp();
-  };
-
-  function showApp(){
-    if(!currentUser){
-      document.getElementById('user-management-page').style.display='block';
-      document.getElementById('main-app-content').style.display='none';
-      return;
-    }
-    document.getElementById('user-management-page').style.display='none';
-    document.getElementById('main-app-content').style.display='block';
-    document.getElementById('user-id-display').innerText=currentUser;
-    renderEntries();
-  }
-
-  function renderEntries(){
-    const finalList=document.getElementById('final-entries-list');
-    const draftList=document.getElementById('drafts-list');
-    const finalEntries=entries.filter(e=>e.user===currentUser&&!e.draft);
-    const drafts=entries.filter(e=>e.user===currentUser&&e.draft);
-
-    finalList.innerHTML='';
-    draftList.innerHTML='';
-
-    document.getElementById('home-empty-state').classList.toggle('hidden',finalEntries.length>0);
-    document.getElementById('drafts-empty-state').classList.toggle('hidden',drafts.length>0);
-
-    document.getElementById('drafts-count').innerText=drafts.length;
-    document.getElementById('drafts-header-count').innerText=drafts.length;
-
-    finalEntries.forEach(e=>{
-      const wrap=document.createElement('div');
-      wrap.className='bg-white p-5 border-l-4 border-blue-400 shadow-md rounded-lg mb-2 flex justify-between';
-
-      const content=document.createElement('div');
-      content.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Final)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
-
-      const del=document.createElement('button');
-      del.innerText='Delete';
-      del.className='ml-4 bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
-      del.onclick=()=>{
-        if(confirm('Delete this entry?')){
-          entries=entries.filter(x=>x!==e);
-          localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));
-          renderEntries();
-        }
-      };
-
-      wrap.appendChild(content);
-      wrap.appendChild(del);
-      finalList.appendChild(wrap);
-    });
-
-    drafts.forEach(e=>{
-      const wrap=document.createElement('div');
-      wrap.className='bg-white p-5 border-l-4 border-gray-400 shadow-md rounded-lg mb-2 flex justify-between';
-
-      const content=document.createElement('div');
-      content.innerHTML=`<p class="text-gray-500 text-sm">${new Date(e.time).toLocaleString()} (Draft)</p><p class="text-gray-800 whitespace-pre-wrap">${e.text}</p>`;
-
-      const actions=document.createElement('div');
-
-      const fin=document.createElement('button');
-      fin.innerText='Finalize';
-      fin.className='bg-blue-600 text-white px-2 py-1 rounded mb-1 hover:bg-blue-700';
-      fin.onclick=()=>{e.draft=false;localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));renderEntries();toast('Finalized');};
-
-      const del=document.createElement('button');
-      del.innerText='Delete';
-      del.className='bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700';
-      del.onclick=()=>{entries=entries.filter(x=>x!==e);localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));renderEntries();toast('Draft deleted');};
-
-      actions.appendChild(fin);
-      actions.appendChild(del);
-      wrap.appendChild(content);
-      wrap.appendChild(actions);
-      draftList.appendChild(wrap);
-    });
-  }
-
-  document.getElementById('new-entry-form').onsubmit=e=>{
-    e.preventDefault();
-    const val=document.getElementById('new-entry-text').value.trim();
-    if(!val){toast('Cannot save empty entry');return;}
-    const isDraft=e.submitter.dataset.action==='draft';
-    entries.push({user:currentUser,text:val,draft:isDraft,time:now()});
-    localStorage.setItem(ENTRIES_KEY,JSON.stringify(entries));
-    document.getElementById('new-entry-text').value='';
-    toast(isDraft?'Draft saved':'Final entry saved');
-    showApp();
-  };
-
-  document.getElementById('logout-button').onclick=()=>{
-    currentUser=null;
-    localStorage.setItem(SELECTED_KEY,'');
-    showApp();
-  };
-
-  window.addEventListener('hashchange',()=>{
-    const h=window.location.hash||'#home';
-    document.querySelectorAll('.page-content').forEach(p=>{
-      p.classList.remove('active');
-      p.style.display='none';
-    });
-    const el=document.querySelector(h+'-page');
-    if(el){
-      el.style.display='block';
-      setTimeout(()=>el.classList.add('active'),10);
-    }
-  });
-
-  renderUsers();
-  showApp();
-  if(!window.location.hash) window.location.hash='#home';
-  window.dispatchEvent(new Event('hashchange'));
-</script>
-
+    if (!window.location.hash) window.location.hash = '#home';
+    routeTo(window.location.hash);
+  </script>
 </body>
 </html>
