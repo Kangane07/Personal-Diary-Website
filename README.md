@@ -1,45 +1,64 @@
-# 📝 Personal Journal - Multi-User Web App
+# Personal Journal (Full-Stack)
 
-A **modern, multi-user diary** right in your browser! Write, save, and manage **final entries** or **drafts** with a clean interface and offline storage.  
+A production-oriented personal diary web app with:
+- account authentication
+- JWT sessions
+- backend API + SQLite storage
+- cloud-ready architecture
+- legal pages and operational docs
+- automated API tests + CI
 
----
+## Features
 
-## 🚀 Features
+- Register/login with email + password
+- Email verification token flow
+- Password reset token flow
+- Journal CRUD (draft/final)
+- JSON export
+- Rate limiting and secure headers
+- Data schema versioning table
 
-- Multi-user support — create or switch profiles easily.  
-- Save **drafts** or **final entries**.  
-- Delete entries or entire users safely.  
-- Fully offline — all data stored locally.  
-- Responsive design with **TailwindCSS**.  
+## Tech Stack
 
----
+- Frontend: HTML + Tailwind + Vanilla JS (`public/index.html`)
+- Backend: Node.js + Express (`server.js`)
+- Database: SQLite (`better-sqlite3`)
+- Validation: Zod
+- Auth: JWT + bcrypt
+- Testing: Vitest + Supertest
 
-## 💻 Live Demo
+## Quick start
 
-Try it here: [Personal Journal on GitHub Pages](https://kangane07.github.io/Personal-Diary-Website/)  
+```bash
+npm install
+npm start
+```
 
----
+Open `http://localhost:3000`.
 
-## ⚡ Quick Start
+## Deployment (important)
 
-1. Open `index.html` in your browser.  
-2. Create a user or select an existing one.  
-3. Start writing entries or drafts.  
-4. Manage your diary with delete/finalize options.  
+- This is a **full-stack** app; GitHub Pages alone is not enough because API routes (`/api/*`) require a Node server.
+- Deploy backend on Render/Railway/Fly.io (or your VPS), then host frontend either:
+  - on the same origin, or
+  - separately and configure API base URL from login screen.
 
----
+## Environment variables
 
-## 🛠 Built With
+- `PORT` (optional, default `3000`)
+- `JWT_SECRET` (strong secret in production)
+- `DB_PATH` (optional, default `data/diary.db`)
 
-- **HTML5**  
-- **TailwindCSS**  
-- **Vanilla JavaScript**  
-- **LocalStorage**  
+## Quality and operations
 
----
+- CI pipeline: `.github/workflows/ci.yml`
+- API tests: `tests/api.test.js`
+- Product roadmap: `docs/ROADMAP.md`
+- Changelog: `docs/CHANGELOG.md`
+- Support workflow: `docs/SUPPORT.md`
+- SLA policy: `docs/SLA.md`
 
-## ✨ Author
+## Legal
 
-**Omkar Kangane**  
-- Instagram: [@om_kangane07](https://www.instagram.com/om_kangane07)  
-- Email: omkangane07@gmail.com  
+- Privacy policy: `/privacy.html`
+- Terms of service: `/terms.html`
