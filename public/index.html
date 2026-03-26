@@ -27,6 +27,11 @@
         </form>
       </div>
       <div id="auth-info" class="mt-3 text-sm text-slate-700"></div>
+      <div class="mt-3 text-xs text-slate-500">
+        Hosting frontend separately? Set backend API URL:
+        <input id="api-base" class="border rounded p-1 ml-1 w-64 max-w-full" placeholder="https://your-api.example.com" />
+        <button id="save-api-base" class="px-2 py-1 rounded bg-slate-200">Save</button>
+      </div>
     </section>
 
     <section id="app" class="hidden bg-white rounded-2xl border p-6 shadow space-y-4">
@@ -72,17 +77,29 @@
   </main>
 
   <script>
-    const state = { token: localStorage.getItem('token') || '', verificationToken: '' };
+    const state = {
+      token: localStorage.getItem('token') || '',
+      verificationToken: '',
+      apiBase: localStorage.getItem('apiBase') || ''
+    };
+
+    const authInfo = document.getElementById('auth-info');
 
     async function api(url, options = {}) {
-      const res = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}),
-          ...(options.headers || {})
-        }
-      });
+      let res;
+      try {
+        res = await fetch(`${state.apiBase}${url}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(state.token ? { Authorization: `Bearer ${state.token}` } : {}),
+            ...(options.headers || {})
+          }
+        });
+      } catch (err) {
+        authInfo.textContent = `Network error. If frontend is hosted separately, configure API base URL above.`;
+        throw err;
+      }
       if (res.status === 204) return null;
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Request failed');
@@ -230,7 +247,15 @@
       setAuthed(false);
     };
 
+    document.getElementById('save-api-base').onclick = () => {
+      const input = document.getElementById('api-base');
+      state.apiBase = input.value.trim().replace(/\/$/, '');
+      localStorage.setItem('apiBase', state.apiBase);
+      authInfo.textContent = `Saved API base URL: ${state.apiBase || '(same origin)'}`;
+    };
+
     (async function init() {
+      document.getElementById('api-base').value = state.apiBase;
       if (!state.token) {
         setAuthed(false);
         return;

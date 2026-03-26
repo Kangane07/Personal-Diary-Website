@@ -36,6 +36,13 @@ npm start
 
 Open `http://localhost:3000`.
 
+## Deployment (important)
+
+- This is a **full-stack** app; GitHub Pages alone is not enough because API routes (`/api/*`) require a Node server.
+- Deploy backend on Render/Railway/Fly.io (or your VPS), then host frontend either:
+  - on the same origin, or
+  - separately and configure API base URL from login screen.
+
 ## Environment variables
 
 - `PORT` (optional, default `3000`)
