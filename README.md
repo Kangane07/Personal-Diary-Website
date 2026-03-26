@@ -1,45 +1,46 @@
-# 📝 Personal Journal - Multi-User Web App
+# Personal Journal (Render Deployment)
 
-A **modern, multi-user diary** right in your browser! Write, save, and manage **final entries** or **drafts** with a clean interface and offline storage.  
+A full-stack personal diary app with account auth, cloud API, and persistent SQLite storage.
 
----
+## Stack
+- Frontend: `public/index.html` (served by Express)
+- Backend: `server.js` (Express API)
+- Database: SQLite (`better-sqlite3`)
+- Auth: JWT + bcrypt
+- Tests: Vitest + Supertest
 
-## 🚀 Features
+## Run locally
+```bash
+npm install
+npm start
+```
+Open `http://localhost:3000`.
 
-- Multi-user support — create or switch profiles easily.  
-- Save **drafts** or **final entries**.  
-- Delete entries or entire users safely.  
-- Fully offline — all data stored locally.  
-- Responsive design with **TailwindCSS**.  
+## Deploy to Render (your target)
+This project is now configured to run directly on Render at:
+`https://personal-diary-website-qqh1.onrender.com`
 
----
+### 1) Create/Update Render service
+- Use this repo and `render.yaml`.
+- Build command: `npm install`
+- Start command: `npm start`
+- Ensure persistent disk is mounted at `/var/data`.
 
-## 💻 Live Demo
+### 2) Set Render environment variables
+- `NODE_ENV=production`
+- `JWT_SECRET=<strong-random-secret>`
+- `DB_PATH=/var/data/diary.db`
+- `CLIENT_ORIGIN=https://personal-diary-website-qqh1.onrender.com`
 
-Try it here: [Personal Journal on GitHub Pages](https://kangane07.github.io/Personal-Diary-Website/)  
+### 3) Redeploy
+- Trigger manual deploy in Render dashboard after updating env vars.
 
----
+## API + UI notes
+- The app serves frontend and API from the same origin on Render.
+- Main app URL: `https://personal-diary-website-qqh1.onrender.com`
+- Health check: `https://personal-diary-website-qqh1.onrender.com/api/health`
 
-## ⚡ Quick Start
-
-1. Open `index.html` in your browser.  
-2. Create a user or select an existing one.  
-3. Start writing entries or drafts.  
-4. Manage your diary with delete/finalize options.  
-
----
-
-## 🛠 Built With
-
-- **HTML5**  
-- **TailwindCSS**  
-- **Vanilla JavaScript**  
-- **LocalStorage**  
-
----
-
-## ✨ Author
-
-**Omkar Kangane**  
-- Instagram: [@om_kangane07](https://www.instagram.com/om_kangane07)  
-- Email: omkangane07@gmail.com  
+## Test
+```bash
+npm test
+```
